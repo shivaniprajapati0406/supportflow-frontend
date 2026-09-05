@@ -1,0 +1,872 @@
+/* =========================================
+   GLOBAL
+========================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #111318;
+  color: white;
+}
+
+
+/* =========================================
+   ADMIN DASHBOARD
+========================================= */
+
+.admin-dashboard {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 50px 30px;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.admin-dashboard-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 35px;
+}
+
+.admin-dashboard-header h1 {
+  margin: 0;
+  font-size: 42px;
+  font-weight: 700;
+}
+
+.admin-dashboard-header p {
+  margin: 10px 0 0;
+  font-size: 18px;
+  color: #a7b0c0;
+}
+
+
+/* =========================================
+   REFRESH BUTTON
+========================================= */
+
+.refresh-btn {
+  border: none;
+  padding: 12px 22px;
+  border-radius: 10px;
+
+  background: #2563eb;
+  color: white;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.refresh-btn:hover {
+  background: #1d4ed8;
+}
+
+
+/* =========================================
+   STATISTICS
+========================================= */
+
+.stats-grid {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  gap: 18px;
+
+  margin: 30px 0 35px;
+}
+
+
+/* STAT CARD */
+
+.stat-card {
+  min-width: 0;
+
+  padding: 22px;
+
+  border-radius: 15px;
+
+  background: #1d212b;
+
+  border: 1px solid #303541;
+
+  display: flex;
+
+  flex-direction: row;
+
+  align-items: center;
+
+  justify-content: flex-start;
+
+  gap: 15px;
+
+  text-align: left;
+}
+
+.stat-card:hover {
+  border-color: #2563eb;
+  transform: translateY(-2px);
+  transition: 0.2s;
+}
+
+
+/* STAT ICON */
+
+.stat-icon {
+  font-size: 30px;
+  width: 40px;
+  flex-shrink: 0;
+}
+
+
+/* STAT TEXT */
+
+.stat-card span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  font-size: 14px;
+
+  color: #aaa;
+}
+
+.stat-card strong {
+  display: block;
+
+  font-size: 28px;
+
+  color: white;
+}
+
+
+/* =========================================
+   SEARCH + FILTER
+========================================= */
+
+.filter-section {
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+
+  min-width: 0;
+
+  padding: 14px 16px;
+
+  border-radius: 10px;
+
+  border: 1px solid #3b4250;
+
+  background: #1d212b;
+
+  color: white;
+
+  font-size: 15px;
+
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: #777;
+}
+
+.search-input:focus {
+  border-color: #2563eb;
+}
+
+
+/* FILTER */
+
+.filter-select {
+  width: 170px;
+
+  min-width: 170px;
+
+  padding: 14px;
+
+  border-radius: 10px;
+
+  border: 1px solid #3b4250;
+
+  background: #1d212b;
+
+  color: white;
+
+  font-size: 15px;
+
+  cursor: pointer;
+}
+
+
+/* =========================================
+   RESULT INFO
+========================================= */
+
+.results-info {
+  width: 100%;
+
+  margin: 20px 0;
+
+  font-size: 15px;
+
+  color: #aaa;
+}
+
+
+/* =========================================
+   TICKET LIST
+========================================= */
+
+.admin-ticket-list {
+  width: 100%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 22px;
+}
+
+
+/* =========================================
+   TICKET CARD
+========================================= */
+
+.admin-ticket-card {
+  width: 100%;
+
+  background: #1d212b;
+
+  border: 1px solid #303541;
+
+  border-radius: 18px;
+
+  padding: 28px;
+
+  transition: 0.2s;
+}
+
+.admin-ticket-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #2563eb;
+}
+
+
+/* =========================================
+   CARD HEADER
+========================================= */
+
+.admin-card-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  gap: 20px;
+
+  padding-bottom: 20px;
+
+  border-bottom: 1px solid #303541;
+}
+
+.admin-card-header h2 {
+  margin: 0 0 8px;
+
+  font-size: 25px;
+}
+
+.admin-card-header small {
+  color: #777;
+}
+
+
+/* =========================================
+   STATUS BADGE
+========================================= */
+
+.status-badge {
+  padding: 8px 15px;
+
+  border-radius: 30px;
+
+  background: #166534;
+
+  color: white;
+
+  font-weight: 600;
+
+  font-size: 14px;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================
+   CUSTOMER
+========================================= */
+
+.customer-section {
+  padding: 20px 0;
+}
+
+.customer-section h3 {
+  margin: 0 0 12px;
+
+  font-size: 17px;
+}
+
+.customer-details {
+  display: flex;
+
+  gap: 40px;
+
+  flex-wrap: wrap;
+}
+
+.customer-details p {
+  margin: 0;
+
+  color: #ccc;
+}
+
+
+/* =========================================
+   DESCRIPTION
+========================================= */
+
+.description-section {
+  padding: 20px 0;
+
+  border-top: 1px solid #303541;
+}
+
+.description-section h3 {
+  margin: 0 0 10px;
+
+  font-size: 17px;
+}
+
+.description-section p {
+  margin: 0;
+
+  line-height: 1.7;
+
+  color: #ccc;
+}
+
+
+/* =========================================
+   TICKET DETAILS
+========================================= */
+
+.ticket-details-grid {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 15px;
+
+  padding: 20px 0;
+
+  border-top: 1px solid #303541;
+}
+
+.ticket-details-grid div {
+  background: #171a22;
+
+  padding: 15px;
+
+  border-radius: 10px;
+}
+
+.ticket-details-grid span {
+  display: block;
+
+  font-size: 13px;
+
+  color: #777;
+
+  margin-bottom: 6px;
+}
+
+.ticket-details-grid strong {
+  font-size: 16px;
+
+  color: white;
+}
+
+
+/* =========================================
+   STATUS UPDATE
+========================================= */
+
+.status-update {
+  display: flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+  padding-top: 20px;
+
+  border-top: 1px solid #303541;
+}
+
+.status-update label {
+  font-weight: 600;
+}
+
+.status-update select {
+  padding: 10px 14px;
+
+  border-radius: 8px;
+
+  border: 1px solid #3b4250;
+
+  background: #111318;
+
+  color: white;
+
+  cursor: pointer;
+}
+
+.updating-text {
+  font-size: 14px;
+
+  color: #aaa;
+}
+
+
+/* =========================================
+   LOADING / EMPTY
+========================================= */
+
+.dashboard-message {
+  text-align: center;
+
+  padding: 70px 20px;
+
+  background: #1d212b;
+
+  border: 1px solid #303541;
+
+  border-radius: 18px;
+}
+
+.dashboard-message h2 {
+  margin: 15px 0 8px;
+}
+
+.dashboard-message p {
+  color: #aaa;
+}
+
+.loading-icon,
+.empty-icon {
+  font-size: 45px;
+}
+
+
+/* =========================================
+   MY TICKETS
+========================================= */
+
+.my-tickets-page {
+  min-height: 100vh;
+
+  padding: 50px 8%;
+
+  background: #111318;
+
+  color: white;
+}
+
+.my-tickets-header {
+  max-width: 1100px;
+
+  margin: 0 auto 35px;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+}
+
+.my-tickets-header h1 {
+  font-size: 38px;
+
+  margin: 0 0 8px;
+}
+
+.my-tickets-header p {
+  color: #aaa;
+
+  margin: 0;
+}
+
+.new-ticket-btn {
+  border: none;
+
+  padding: 13px 22px;
+
+  border-radius: 8px;
+
+  background: #f5b400;
+
+  color: #111;
+
+  font-weight: bold;
+
+  font-size: 15px;
+
+  cursor: pointer;
+}
+
+.new-ticket-btn:hover {
+  background: #ffc928;
+}
+
+.tickets-container {
+  max-width: 1100px;
+
+  margin: auto;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 20px;
+}
+
+.ticket-card {
+  background: #1b1e25;
+
+  border: 1px solid #2d313a;
+
+  border-radius: 14px;
+
+  padding: 25px;
+}
+
+.ticket-card-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+}
+
+.ticket-card-header h2 {
+  margin: 0 0 7px;
+
+  font-size: 23px;
+}
+
+.ticket-card-header small {
+  color: #777;
+}
+
+.ticket-description {
+  margin: 22px 0;
+
+  color: #c7c7c7;
+
+  line-height: 1.6;
+}
+
+.ticket-info {
+  display: flex;
+
+  gap: 80px;
+
+  border-top: 1px solid #2d313a;
+
+  padding-top: 18px;
+}
+
+.ticket-info div {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.ticket-info label {
+  color: #777;
+
+  font-size: 13px;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 1000px) {
+
+  .stats-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+@media (max-width: 700px) {
+
+  .admin-dashboard {
+    padding: 30px 15px;
+  }
+
+  .admin-dashboard-header {
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .admin-dashboard-header h1 {
+    font-size: 30px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-section {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .search-input,
+  .filter-select {
+    width: 100%;
+
+    min-width: 0;
+  }
+
+  .ticket-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-card-header {
+    flex-direction: column;
+  }
+
+  .status-update {
+    flex-wrap: wrap;
+  }
+
+  .my-tickets-page {
+    padding: 30px 15px;
+  }
+
+  .my-tickets-header {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 20px;
+  }
+
+  .ticket-card-header {
+    flex-direction: column;
+
+    gap: 15px;
+  }
+
+  .ticket-info {
+    flex-direction: column;
+
+    gap: 15px;
+  }
+/* =========================================
+   STEP 9 - STATUS COLORS
+========================================= */
+
+.status-open {
+  background: #14532d !important;
+  color: #86efac !important;
+}
+
+.status-progress {
+  background: #713f12 !important;
+  color: #fde047 !important;
+}
+
+.status-resolved {
+  background: #1e3a8a !important;
+  color: #93c5fd !important;
+}
+
+.status-closed {
+  background: #374151 !important;
+  color: #d1d5db !important;
+}
+
+
+/* =========================================
+   PRIORITY COLORS
+========================================= */
+
+.priority-text {
+  font-weight: 700;
+}
+
+.priority-low {
+  color: #86efac !important;
+}
+
+.priority-medium {
+  color: #fde047 !important;
+}
+
+.priority-high {
+  color: #fb923c !important;
+}
+
+.priority-urgent {
+  color: #f87171 !important;
+}
+
+
+/* =========================================
+   DELETE BUTTON
+========================================= */
+
+.delete-ticket-btn {
+  margin-left: auto;
+
+  padding: 10px 16px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: #dc2626;
+
+  color: white;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.delete-ticket-btn:hover {
+  background: #b91c1c;
+}
+
+.delete-ticket-btn:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================
+   STATUS UPDATE - STEP 9
+========================================= */
+
+.status-update {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding-top: 20px;
+
+  border-top: 1px solid #303541;
+
+  flex-wrap: wrap;
+}
+
+.status-update select {
+  padding: 10px 14px;
+
+  border-radius: 8px;
+
+  border: 1px solid #3b4250;
+
+  background: #111318;
+
+  color: white;
+
+  cursor: pointer;
+}
+
+.status-update label {
+  font-weight: 600;
+
+  color: #d1d5db;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 700px) {
+
+  .delete-ticket-btn {
+    width: 100%;
+
+    margin-left: 0;
+  }
+
+  .status-update {
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+  .status-update select {
+    width: 100%;
+  }
+
+}
+}
