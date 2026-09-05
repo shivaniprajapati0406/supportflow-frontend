@@ -206,7 +206,7 @@ function TicketDetails() {
   // ATTACHMENT HELPERS
   // =====================================================
 
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = "https://supportflow-backend-whmb.onrender.com/api";
 
   const getAttachmentUrl = (
     attachment,
