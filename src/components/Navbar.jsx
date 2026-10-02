@@ -21,13 +21,32 @@ function Navbar() {
     useState(false);
 
   // ==========================================================
+  // DARK / LIGHT MODE
+  // ==========================================================
+
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("theme") !== "light";
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark-mode");
+      document.body.classList.remove("light-mode");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.body.classList.add("light-mode");
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
+
+  // ==========================================================
   // LOAD USER
   // ==========================================================
 
   useEffect(() => {
     const loadUser = () => {
-      const userData =
-        localStorage.getItem("user");
+      const userData = localStorage.getItem("user");
 
       if (!userData) {
         setUser(null);
@@ -38,10 +57,7 @@ function Navbar() {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
       } catch (error) {
-        console.error(
-          "User parsing error:",
-          error
-        );
+        console.error("User parsing error:", error);
 
         localStorage.removeItem("user");
         localStorage.removeItem("token");
@@ -52,16 +68,10 @@ function Navbar() {
 
     loadUser();
 
-    window.addEventListener(
-      "storage",
-      loadUser
-    );
+    window.addEventListener("storage", loadUser);
 
     return () => {
-      window.removeEventListener(
-        "storage",
-        loadUser
-      );
+      window.removeEventListener("storage", loadUser);
     };
   }, [location]);
 
@@ -97,22 +107,15 @@ function Navbar() {
         data.success &&
         Array.isArray(data.notifications)
       ) {
-        setNotifications(
-          data.notifications
-        );
+        setNotifications(data.notifications);
       }
 
       const countData = await apiGet(
         `/notifications/user/${userId}/unread-count`
       );
 
-      if (
-        countData &&
-        countData.success
-      ) {
-        setUnreadCount(
-          countData.count || 0
-        );
+      if (countData && countData.success) {
+        setUnreadCount(countData.count || 0);
       }
     } catch (error) {
       console.error(
@@ -150,9 +153,7 @@ function Navbar() {
   // MARK SINGLE NOTIFICATION AS READ
   // ==========================================================
 
-  const markAsRead = async (
-    notificationId
-  ) => {
+  const markAsRead = async (notificationId) => {
     try {
       await apiPut(
         `/notifications/${notificationId}/read`,
@@ -161,8 +162,7 @@ function Navbar() {
 
       setNotifications((prev) =>
         prev.map((notification) =>
-          notification._id ===
-          notificationId
+          notification._id === notificationId
             ? {
                 ...notification,
                 isRead: true,
@@ -189,8 +189,7 @@ function Navbar() {
   const markAllAsRead = async () => {
     if (!user) return;
 
-    const userId =
-      user._id || user.id;
+    const userId = user._id || user.id;
 
     try {
       await apiPut(
@@ -229,34 +228,27 @@ function Navbar() {
         `/notifications/${notificationId}`
       );
 
+      const deletedNotification =
+        notifications.find(
+          (notification) =>
+            notification._id === notificationId
+        );
+
       setNotifications((prev) =>
         prev.filter(
           (notification) =>
-            notification._id !==
-            notificationId
+            notification._id !== notificationId
         )
       );
 
-      setUnreadCount((prev) => {
-        const deletedNotification =
-          notifications.find(
-            (notification) =>
-              notification._id ===
-              notificationId
-          );
-
-        if (
-          deletedNotification &&
-          !deletedNotification.isRead
-        ) {
-          return Math.max(
-            prev - 1,
-            0
-          );
-        }
-
-        return prev;
-      });
+      if (
+        deletedNotification &&
+        !deletedNotification.isRead
+      ) {
+        setUnreadCount((prev) =>
+          Math.max(prev - 1, 0)
+        );
+      }
     } catch (error) {
       console.error(
         "Delete notification error:",
@@ -275,9 +267,7 @@ function Navbar() {
     if (!notification) return;
 
     if (!notification.isRead) {
-      await markAsRead(
-        notification._id
-      );
+      await markAsRead(notification._id);
     }
 
     setShowNotifications(false);
@@ -287,8 +277,7 @@ function Navbar() {
         `/ticket/${notification.ticketId._id}`
       );
     } else if (
-      typeof notification.ticketId ===
-      "string"
+      typeof notification.ticketId === "string"
     ) {
       navigate(
         `/ticket/${notification.ticketId}`
@@ -327,13 +316,10 @@ function Navbar() {
   const formatTime = (date) => {
     if (!date) return "";
 
-    const notificationDate =
-      new Date(date);
+    const notificationDate = new Date(date);
 
     if (
-      Number.isNaN(
-        notificationDate.getTime()
-      )
+      Number.isNaN(notificationDate.getTime())
     ) {
       return "";
     }
@@ -390,9 +376,7 @@ function Navbar() {
               <Link
                 to="/create-ticket"
                 className={
-                  isActive(
-                    "/create-ticket"
-                  )
+                  isActive("/create-ticket")
                     ? "active"
                     : ""
                 }
@@ -403,26 +387,39 @@ function Navbar() {
               <Link
                 to="/my-tickets"
                 className={
-                  isActive(
-                    "/my-tickets"
-                  )
+                  isActive("/my-tickets")
                     ? "active"
                     : ""
                 }
               >
                 My Tickets
               </Link>
+
+              {/* SUPPORT AGENT DASHBOARD */}
+
+              {user.role === "Support Agent" && (
+                <Link
+                  to="/agent-dashboard"
+                  className={
+                    isActive("/agent-dashboard")
+                      ? "active"
+                      : ""
+                  }
+                >
+                  Agent Dashboard
+                </Link>
+              )}
             </>
           )}
+
+          {/* ADMIN LINKS */}
 
           {user && isAdmin && (
             <>
               <Link
                 to="/dashboard"
                 className={
-                  isActive(
-                    "/dashboard"
-                  )
+                  isActive("/dashboard")
                     ? "active"
                     : ""
                 }
@@ -433,9 +430,7 @@ function Navbar() {
               <Link
                 to="/analytics"
                 className={
-                  isActive(
-                    "/analytics"
-                  )
+                  isActive("/analytics")
                     ? "active"
                     : ""
                 }
@@ -444,6 +439,7 @@ function Navbar() {
               </Link>
             </>
           )}
+
         </div>
 
         {/* ==================================================
@@ -452,14 +448,38 @@ function Navbar() {
 
         <div className="navbar-right">
 
+          {/* ==================================================
+              DARK / LIGHT MODE BUTTON
+          ================================================== */}
+
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={() =>
+              setDarkMode((prev) => !prev)
+            }
+            aria-label="Toggle theme"
+            title={
+              darkMode
+                ? "Switch to Light Mode"
+                : "Switch to Dark Mode"
+            }
+          >
+            {darkMode ? "☀️" : "🌙"}
+          </button>
+
           {!user ? (
             <>
+              {/* LOGIN */}
+
               <Link
                 to="/login"
                 className="navbar-login"
               >
                 Login
               </Link>
+
+              {/* GET STARTED */}
 
               <Link
                 to="/register"
@@ -524,8 +544,7 @@ function Navbar() {
                         </span>
                       </div>
 
-                      {unreadCount >
-                        0 && (
+                      {unreadCount > 0 && (
                         <button
                           type="button"
                           className="mark-all-button"
@@ -536,6 +555,7 @@ function Navbar() {
                           Mark all read
                         </button>
                       )}
+
                     </div>
 
                     <div className="notification-list">
@@ -546,9 +566,9 @@ function Navbar() {
                             Loading...
                           </div>
                         </div>
-                      ) : notifications.length ===
-                        0 ? (
+                      ) : notifications.length === 0 ? (
                         <div className="notification-empty">
+
                           <div className="empty-notification-icon">
                             🔔
                           </div>
@@ -560,12 +580,11 @@ function Navbar() {
                           <span>
                             You're all caught up.
                           </span>
+
                         </div>
                       ) : (
                         notifications.map(
-                          (
-                            notification
-                          ) => (
+                          (notification) => (
                             <div
                               key={
                                 notification._id
@@ -605,6 +624,7 @@ function Navbar() {
                                   {!notification.isRead && (
                                     <span className="unread-dot"></span>
                                   )}
+
                                 </div>
 
                                 <p>
@@ -618,14 +638,13 @@ function Navbar() {
                                     notification.createdAt
                                   )}
                                 </span>
+
                               </div>
 
                               <button
                                 type="button"
                                 className="notification-delete"
-                                onClick={(
-                                  event
-                                ) =>
+                                onClick={(event) =>
                                   deleteNotification(
                                     event,
                                     notification._id
@@ -644,6 +663,7 @@ function Navbar() {
                     </div>
                   </div>
                 )}
+
               </div>
 
               {/* ==========================================
@@ -667,6 +687,13 @@ function Navbar() {
                     Admin
                   </span>
                 )}
+
+                {user.role === "Support Agent" && (
+                  <span className="agent-badge">
+                    Agent
+                  </span>
+                )}
+
               </div>
 
               {/* ==========================================
@@ -680,6 +707,7 @@ function Navbar() {
               >
                 Logout
               </button>
+
             </>
           )}
 

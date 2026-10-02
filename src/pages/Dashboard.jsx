@@ -1,5 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+           import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 import {
   apiGet,
@@ -8,19 +18,52 @@ import {
 } from "../api/api";
 
 import "./Dashboard.css";
+import "./Dashboard-premium.css";
+import "./DashboardGraphs.css";
 
 function Dashboard() {
   const navigate = useNavigate();
 
   const [tickets, setTickets] = useState([]);
-  const [admins, setAdmins] = useState([]);
+  const [agents, setAgents] = useState([]);
 
   const [loading, setLoading] = useState(true);
-  const [adminsLoading, setAdminsLoading] = useState(true);
+  const [agentsLoading, setAgentsLoading] = useState(true);
 
   const [updatingId, setUpdatingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [assigningId, setAssigningId] = useState(null);
+
+  // ==========================================================
+// CSAT / CUSTOMER FEEDBACK
+// ==========================================================
+
+const [feedbackSummary, setFeedbackSummary] = useState({
+  totalFeedback: 0,
+  averageRating: 0,
+  ratingDistribution: {
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+  },
+});
+
+const [feedbackLoading, setFeedbackLoading] = useState(true);
+// ==========================================================
+// LIVE SLA CLOCK
+// ==========================================================
+
+const [slaNow, setSlaNow] = useState(Date.now());
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    setSlaNow(Date.now());
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, []);
 
   // ==========================================================
   // SEARCH + FILTER STATE
@@ -36,6 +79,18 @@ function Dashboard() {
 
   const [categoryFilter, setCategoryFilter] =
     useState("All Categories");
+
+  const [agentFilter, setAgentFilter] =
+    useState("All Agents");
+
+  const [customerFilter, setCustomerFilter] =
+    useState("All Customers");
+
+  const [fromDate, setFromDate] =
+    useState("");
+
+  const [toDate, setToDate] =
+    useState("");
 
   const [sortOrder, setSortOrder] =
     useState("Newest First");
@@ -74,20 +129,20 @@ function Dashboard() {
   // FETCH ALL ADMINS
   // ==========================================================
 
-  const fetchAdmins = async () => {
+  const fetchAgents = async () => {
     try {
-      setAdminsLoading(true);
+      setAgentsLoading(true);
 
       const data = await apiGet(
-        "/admin/admins"
+        "/admin/agents"
       );
 
-      setAdmins(
-        data?.admins || []
+      setAgents(
+        data?.agents || []
       );
     } catch (error) {
       console.error(
-        "Fetch Admins Error:",
+        "Fetch Agents Error:",
         error
       );
 
@@ -96,7 +151,7 @@ function Dashboard() {
           "Unable to load admin users"
       );
     } finally {
-      setAdminsLoading(false);
+      setAgentsLoading(false);
     }
   };
 
@@ -105,9 +160,31 @@ function Dashboard() {
   // ==========================================================
 
   useEffect(() => {
-    fetchTickets();
-    fetchAdmins();
-  }, []);
+  fetchTickets();
+  fetchAgents();
+  fetchFeedbackSummary();
+}, []);
+
+
+// ==========================================================
+// FETCH CSAT / CUSTOMER FEEDBACK SUMMARY
+// ==========================================================
+
+const fetchFeedbackSummary = async () => {
+  try {
+    setFeedbackLoading(true);
+
+    const data = await apiGet("/feedback/admin/summary");
+
+    if (data?.success && data?.summary) {
+      setFeedbackSummary(data.summary);
+    }
+  } catch (error) {
+    console.error("Fetch Feedback Summary Error:", error);
+  } finally {
+    setFeedbackLoading(false);
+  }
+};
 
   // ==========================================================
   // UPDATE STATUS
@@ -308,10 +385,6 @@ function Dashboard() {
     }
   };
 
-  // ==========================================================
-  // STATISTICS
-  // ==========================================================
-
   const totalTickets =
     tickets.length;
 
@@ -346,6 +419,156 @@ function Dashboard() {
     ).length;
 
   // ==========================================================
+  // ANALYTICS DATA
+  // ==========================================================
+
+  const analytics = useMemo(() => {
+    const statusCounts = {
+      Open: 0,
+      "In Progress": 0,
+      "Waiting for Customer": 0,
+      Resolved: 0,
+      Closed: 0,
+    };
+
+    const priorityCounts = {
+      Urgent: 0,
+      High: 0,
+      Medium: 0,
+      Low: 0,
+    };
+
+    const categoryCounts = {};
+
+    tickets.forEach((ticket) => {
+      // Status
+      if (statusCounts[ticket.status] !== undefined) {
+        statusCounts[ticket.status]++;
+      }
+
+      // Priority
+      if (priorityCounts[ticket.priority] !== undefined) {
+        priorityCounts[ticket.priority]++;
+      }
+
+      // Category
+      const category = ticket.category || "General";
+
+      categoryCounts[category] =
+        (categoryCounts[category] || 0) + 1;
+    });
+
+    return {
+      statusCounts,
+      priorityCounts,
+      categoryCounts,
+    };
+  }, [tickets]);
+
+
+  // ==========================================================
+  // REAL-TIME GRAPH DATA
+  // ==========================================================
+
+  const ticketTrend = useMemo(() => {
+    const days = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() - i);
+
+      days.push({
+        date,
+        key: date.toISOString().slice(0, 10),
+        label: date.toLocaleDateString("en-IN", {
+          weekday: "short",
+        }),
+        shortDate: date.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+        }),
+        count: 0,
+      });
+    }
+
+    tickets.forEach((ticket) => {
+      if (!ticket.createdAt) return;
+
+      const created = new Date(ticket.createdAt);
+      if (Number.isNaN(created.getTime())) return;
+
+      created.setHours(0, 0, 0, 0);
+      const key = created.toISOString().slice(0, 10);
+
+      const day = days.find((item) => item.key === key);
+      if (day) day.count += 1;
+    });
+
+    return days;
+  }, [tickets]);
+
+  const trendMax = Math.max(
+    ...ticketTrend.map((item) => item.count),
+    1
+  );
+
+  const trendPoints = ticketTrend
+    .map((item, index) => {
+      const x =
+        ticketTrend.length === 1
+          ? 50
+          : (index / (ticketTrend.length - 1)) * 100;
+
+      const y =
+        90 - (item.count / trendMax) * 70;
+
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  const statusGraphData = useMemo(
+    () => [
+      {
+        label: "Open",
+        count: analytics.statusCounts.Open,
+        className: "graph-open",
+      },
+      {
+        label: "In Progress",
+        count: analytics.statusCounts["In Progress"],
+        className: "graph-progress",
+      },
+      {
+        label: "Waiting for Customer",
+        count: analytics.statusCounts["Waiting for Customer"],
+        className: "graph-waiting",
+      },
+      {
+        label: "Resolved",
+        count: analytics.statusCounts.Resolved,
+        className: "graph-resolved",
+      },
+      {
+        label: "Closed",
+        count: analytics.statusCounts.Closed,
+        className: "graph-closed",
+      },
+    ],
+    [analytics]
+  );
+
+  const statusTotal = statusGraphData.reduce(
+    (sum, item) => sum + item.count,
+    0
+  );
+
+  const statusBarsMax = Math.max(
+    ...statusGraphData.map((item) => item.count),
+    1
+  );
+
+  // ==========================================================
   // GET CATEGORIES
   // ==========================================================
 
@@ -365,6 +588,49 @@ function Dashboard() {
       categorySet
     ).sort((a, b) =>
       a.localeCompare(b)
+    );
+  }, [tickets]);
+
+  // ==========================================================
+  // GET CUSTOMERS
+  // ==========================================================
+
+  const customers = useMemo(() => {
+    const customerMap = new Map();
+
+    tickets.forEach((ticket) => {
+      const customer = ticket.userId;
+
+      if (!customer) return;
+
+      const customerId =
+        typeof customer === "object"
+          ? customer._id || customer.id
+          : customer;
+
+      if (!customerId) return;
+
+      const customerName =
+        typeof customer === "object"
+          ? customer.name || "Unknown Customer"
+          : "Unknown Customer";
+
+      const customerEmail =
+        typeof customer === "object"
+          ? customer.email || ""
+          : "";
+
+      customerMap.set(String(customerId), {
+        id: String(customerId),
+        name: customerName,
+        email: customerEmail,
+      });
+    });
+
+    return Array.from(customerMap.values()).sort((a, b) =>
+      `${a.name} ${a.email}`.localeCompare(
+        `${b.name} ${b.email}`
+      )
     );
   }, [tickets]);
 
@@ -448,11 +714,61 @@ function Dashboard() {
           ticket.category ===
             categoryFilter;
 
+        const assignedAgentId =
+          typeof ticket.assignedTo === "object"
+            ? ticket.assignedTo?._id ||
+              ticket.assignedTo?.id
+            : ticket.assignedTo;
+
+        const matchesAgent =
+          agentFilter === "All Agents" ||
+          String(assignedAgentId || "") ===
+            String(agentFilter);
+
+        const ticketCustomerId =
+          typeof ticket.userId === "object"
+            ? ticket.userId?._id ||
+              ticket.userId?.id
+            : ticket.userId;
+
+        const matchesCustomer =
+          customerFilter === "All Customers" ||
+          String(ticketCustomerId || "") ===
+            String(customerFilter);
+
+        const ticketDate = ticket.createdAt
+          ? new Date(ticket.createdAt)
+          : null;
+
+        const startDate = fromDate
+          ? new Date(`${fromDate}T00:00:00`)
+          : null;
+
+        const endDate = toDate
+          ? new Date(`${toDate}T23:59:59.999`)
+          : null;
+
+        const matchesFromDate =
+          !startDate ||
+          (ticketDate &&
+            !Number.isNaN(ticketDate.getTime()) &&
+            ticketDate >= startDate);
+
+        const matchesToDate =
+          !endDate ||
+          (ticketDate &&
+            !Number.isNaN(ticketDate.getTime()) &&
+            ticketDate <= endDate);
+
         return (
           matchesSearch &&
           matchesStatus &&
           matchesPriority &&
-          matchesCategory
+          matchesCategory &&
+          matchesAgent &&
+          matchesCustomer &&
+          matchesFromDate &&
+          matchesToDate
         );
       });
 
@@ -535,6 +851,10 @@ function Dashboard() {
     statusFilter,
     priorityFilter,
     categoryFilter,
+    agentFilter,
+    customerFilter,
+    fromDate,
+    toDate,
     sortOrder,
   ]);
 
@@ -589,8 +909,351 @@ function Dashboard() {
   };
 
   // ==========================================================
-  // RESET FILTERS
-  // ==========================================================
+// SLA COUNTDOWN HELPERS
+// ==========================================================
+
+const getRemainingSeconds = (deadline) => {
+  if (!deadline) return null;
+
+  const deadlineTime = new Date(deadline).getTime();
+
+  if (Number.isNaN(deadlineTime)) return null;
+
+  return Math.max(
+    0,
+    Math.ceil((deadlineTime - slaNow) / 1000)
+  );
+};
+
+const formatSlaCountdown = (seconds) => {
+  if (seconds === null || seconds === undefined) {
+    return "N/A";
+  }
+
+  if (seconds <= 0) {
+    return "Breached";
+  }
+
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${secs}s`;
+  }
+
+  return `${minutes}m ${secs}s`;
+};
+// ==========================================================
+// SLA WARNING CLASS
+// ==========================================================
+
+const getSlaWarningClass = (seconds) => {
+  if (seconds === null || seconds === undefined) {
+    return "sla-normal";
+  }
+
+  if (seconds <= 0) {
+    return "sla-breached";
+  }
+
+  // Less than 15 minutes
+  if (seconds <= 15 * 60) {
+    return "sla-critical";
+  }
+
+  // Less than 1 hour
+  if (seconds <= 60 * 60) {
+    return "sla-warning";
+  }
+
+  return "sla-normal";
+};
+
+// ==========================================================
+// SLA STATISTICS
+// ==========================================================
+
+const getSlaStatistics = (ticketList = []) => {
+  let withinSla = 0;
+  let warning = 0;
+  let breached = 0;
+
+  ticketList.forEach((ticket) => {
+    const responseStatus =
+      ticket?.slaStatus?.responseStatus;
+
+    const resolutionStatus =
+      ticket?.slaStatus?.resolutionStatus;
+
+    const responseDeadline =
+      ticket?.slaStatus?.responseDeadline;
+
+    const resolutionDeadline =
+      ticket?.slaStatus?.resolutionDeadline;
+
+    const responseSeconds =
+      getRemainingSeconds(responseDeadline);
+
+    const resolutionSeconds =
+      getRemainingSeconds(resolutionDeadline);
+
+    const responseBreached =
+      responseStatus === "Breached";
+
+    const resolutionBreached =
+      resolutionStatus === "Breached";
+
+    const isBreached =
+      responseBreached || resolutionBreached;
+
+    const responseWarning =
+      responseStatus === "Near Breach" ||
+      (
+        responseStatus !== "Completed" &&
+        responseStatus !== "Breached" &&
+        responseSeconds !== null &&
+        responseSeconds > 0 &&
+        responseSeconds <= 60 * 60
+      );
+
+    const resolutionWarning =
+      resolutionStatus === "Near Breach" ||
+      (
+        resolutionStatus !== "Completed" &&
+        resolutionStatus !== "Breached" &&
+        resolutionSeconds !== null &&
+        resolutionSeconds > 0 &&
+        resolutionSeconds <= 60 * 60
+      );
+
+    const isWarning =
+      !isBreached &&
+      (responseWarning || resolutionWarning);
+
+    if (isBreached) {
+      breached++;
+    } else if (isWarning) {
+      warning++;
+    } else {
+      withinSla++;
+    }
+  });
+
+  const total = ticketList.length;
+
+  return {
+    total,
+    withinSla,
+    warning,
+    breached,
+
+    withinSlaPercentage:
+      total > 0
+        ? Math.round((withinSla / total) * 100)
+        : 0,
+
+    warningPercentage:
+      total > 0
+        ? Math.round((warning / total) * 100)
+        : 0,
+
+    breachedPercentage:
+      total > 0
+        ? Math.round((breached / total) * 100)
+        : 0,
+  };
+};
+
+const slaStatistics = getSlaStatistics(tickets);
+
+// ==========================================================
+// SLA ANALYTICS DATA
+// ==========================================================
+// ==========================================================
+// SLA ANALYTICS DATA
+// ==========================================================
+
+const slaAnalytics = useMemo(() => {
+  const priorityData = {
+    Urgent: {
+      total: 0,
+      withinSla: 0,
+      warning: 0,
+      breached: 0,
+    },
+    High: {
+      total: 0,
+      withinSla: 0,
+      warning: 0,
+      breached: 0,
+    },
+    Medium: {
+      total: 0,
+      withinSla: 0,
+      warning: 0,
+      breached: 0,
+    },
+    Low: {
+      total: 0,
+      withinSla: 0,
+      warning: 0,
+      breached: 0,
+    },
+  };
+
+  let responseBreached = 0;
+  let responseCompleted = 0;
+  let resolutionBreached = 0;
+  let resolutionCompleted = 0;
+
+  tickets.forEach((ticket) => {
+    const priority = ticket.priority || "Medium";
+
+    if (!priorityData[priority]) {
+      priorityData[priority] = {
+        total: 0,
+        withinSla: 0,
+        warning: 0,
+        breached: 0,
+      };
+    }
+
+    priorityData[priority].total++;
+
+    const responseStatus =
+      ticket?.slaStatus?.responseStatus;
+
+    const resolutionStatus =
+      ticket?.slaStatus?.resolutionStatus;
+
+    // -----------------------------
+    // RESPONSE SLA
+    // -----------------------------
+
+    if (responseStatus === "Breached") {
+      responseBreached++;
+    }
+
+    if (responseStatus === "Completed") {
+      responseCompleted++;
+    }
+
+    // -----------------------------
+    // RESOLUTION SLA
+    // -----------------------------
+
+    if (resolutionStatus === "Breached") {
+      resolutionBreached++;
+    }
+
+    if (resolutionStatus === "Completed") {
+      resolutionCompleted++;
+    }
+
+    // -----------------------------
+    // PRIORITY SLA
+    // -----------------------------
+
+    const isBreached =
+      responseStatus === "Breached" ||
+      resolutionStatus === "Breached";
+
+    const isWarning =
+      !isBreached &&
+      (
+        responseStatus === "Near Breach" ||
+        resolutionStatus === "Near Breach"
+      );
+
+    if (isBreached) {
+      priorityData[priority].breached++;
+    } else if (isWarning) {
+      priorityData[priority].warning++;
+    } else {
+      priorityData[priority].withinSla++;
+    }
+  });
+
+  const totalTickets = tickets.length;
+
+  return {
+    priorityData,
+
+    responseBreached,
+    responseCompleted,
+
+    resolutionBreached,
+    resolutionCompleted,
+
+    responseBreachRate:
+      totalTickets > 0
+        ? Math.round(
+            (responseBreached / totalTickets) * 100
+          )
+        : 0,
+
+    resolutionBreachRate:
+      totalTickets > 0
+        ? Math.round(
+            (resolutionBreached / totalTickets) * 100
+          )
+        : 0,
+  };
+}, [tickets]);
+
+// ==========================================================
+// SLA VISUAL CHART DATA
+// ==========================================================
+
+const slaChartData = [
+  {
+    name: "Response SLA",
+    Completed: slaAnalytics.responseCompleted,
+    Breached: slaAnalytics.responseBreached,
+  },
+  {
+    name: "Resolution SLA",
+    Completed: slaAnalytics.resolutionCompleted,
+    Breached: slaAnalytics.resolutionBreached,
+  },
+];
+
+const prioritySlaChartData = [
+  {
+    name: "Urgent",
+    "Within SLA": slaAnalytics.priorityData.Urgent?.withinSla || 0,
+    Warning: slaAnalytics.priorityData.Urgent?.warning || 0,
+    Breached: slaAnalytics.priorityData.Urgent?.breached || 0,
+  },
+  {
+    name: "High",
+    "Within SLA": slaAnalytics.priorityData.High?.withinSla || 0,
+    Warning: slaAnalytics.priorityData.High?.warning || 0,
+    Breached: slaAnalytics.priorityData.High?.breached || 0,
+  },
+  {
+    name: "Medium",
+    "Within SLA": slaAnalytics.priorityData.Medium?.withinSla || 0,
+    Warning: slaAnalytics.priorityData.Medium?.warning || 0,
+    Breached: slaAnalytics.priorityData.Medium?.breached || 0,
+  },
+  {
+    name: "Low",
+    "Within SLA": slaAnalytics.priorityData.Low?.withinSla || 0,
+    Warning: slaAnalytics.priorityData.Low?.warning || 0,
+    Breached: slaAnalytics.priorityData.Low?.breached || 0,
+  },
+];
+
+// ==========================================================
+// RESET FILTERS
+// ==========================================================
 
   const resetFilters = () => {
     setSearch("");
@@ -606,6 +1269,18 @@ function Dashboard() {
     setCategoryFilter(
       "All Categories"
     );
+
+    setAgentFilter(
+      "All Agents"
+    );
+
+    setCustomerFilter(
+      "All Customers"
+    );
+
+    setFromDate("");
+
+    setToDate("");
 
     setSortOrder(
       "Newest First"
@@ -671,7 +1346,7 @@ function Dashboard() {
           className="refresh-btn"
           onClick={() => {
             fetchTickets();
-            fetchAdmins();
+            fetchAgents();
           }}
         >
           🔄 Refresh
@@ -767,6 +1442,1025 @@ function Dashboard() {
 
       </div>
 
+{/* ====================================================
+    CSAT / CUSTOMER SATISFACTION
+==================================================== */}
+
+<section className="csat-dashboard-section">
+
+  <div className="csat-section-header">
+    <div>
+      <span className="csat-eyebrow">
+        CUSTOMER EXPERIENCE
+      </span>
+
+      <h2>Customer Satisfaction (CSAT)</h2>
+
+      <p>
+        Customer feedback and support experience overview.
+      </p>
+    </div>
+
+    <div className="csat-header-icon">
+      😊
+    </div>
+  </div>
+
+  <div className="csat-cards-grid">
+
+    {/* AVERAGE RATING */}
+    <div className="csat-card csat-average-card">
+
+      <div className="csat-card-icon">
+        ⭐
+      </div>
+
+      <div className="csat-card-content">
+        <span>Average Rating</span>
+
+        <strong>
+          {feedbackLoading
+            ? "..."
+            : `${Number(
+                feedbackSummary.averageRating || 0
+              ).toFixed(1)} / 5`}
+        </strong>
+
+        <div className="csat-stars">
+          {"★★★★★"}
+        </div>
+      </div>
+
+    </div>
+
+
+    {/* TOTAL RESPONSES */}
+    <div className="csat-card">
+
+      <div className="csat-card-icon">
+        💬
+      </div>
+
+      <div className="csat-card-content">
+        <span>Total Responses</span>
+
+        <strong>
+          {feedbackLoading
+            ? "..."
+            : feedbackSummary.totalFeedback || 0}
+        </strong>
+
+        <small>
+          Customer feedback received
+        </small>
+      </div>
+
+    </div>
+
+
+    {/* 5 STAR */}
+    <div className="csat-card">
+
+      <div className="csat-card-icon">
+        🤩
+      </div>
+
+      <div className="csat-card-content">
+        <span>5 Star Ratings</span>
+
+        <strong>
+          {feedbackLoading
+            ? "..."
+            : feedbackSummary.ratingDistribution?.[5] || 0}
+        </strong>
+
+        <small>
+          Excellent
+        </small>
+      </div>
+
+    </div>
+
+
+    {/* 4 STAR */}
+    <div className="csat-card">
+
+      <div className="csat-card-icon">
+        😄
+      </div>
+
+      <div className="csat-card-content">
+        <span>4 Star Ratings</span>
+
+        <strong>
+          {feedbackLoading
+            ? "..."
+            : feedbackSummary.ratingDistribution?.[4] || 0}
+        </strong>
+
+        <small>
+          Very Good
+        </small>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  {/* RATING DISTRIBUTION */}
+
+  <div className="csat-distribution-card">
+
+    <div className="csat-distribution-header">
+
+      <div>
+        <span className="csat-eyebrow">
+          RATING BREAKDOWN
+        </span>
+
+        <h3>Feedback Distribution</h3>
+      </div>
+
+      <span className="csat-distribution-icon">
+        📊
+      </span>
+
+    </div>
+
+
+    <div className="csat-rating-list">
+
+      {[5, 4, 3, 2, 1].map((rating) => {
+
+        const count =
+          feedbackSummary.ratingDistribution?.[rating] || 0;
+
+        const total =
+          feedbackSummary.totalFeedback || 0;
+
+        const percentage =
+          total > 0
+            ? (count / total) * 100
+            : 0;
+
+        return (
+          <div
+            className="csat-rating-row"
+            key={rating}
+          >
+
+            <div className="csat-rating-label">
+              <span>
+                {rating} ⭐
+              </span>
+
+              <strong>
+                {count}
+              </strong>
+            </div>
+
+            <div className="csat-rating-track">
+
+              <div
+                className="csat-rating-fill"
+                style={{
+                  width: `${percentage}%`,
+                }}
+              />
+
+            </div>
+
+            <span className="csat-rating-percentage">
+              {percentage.toFixed(0)}%
+            </span>
+
+          </div>
+        );
+
+      })}
+
+    </div>
+
+  </div>
+
+</section>
+
+{/* ====================================================
+    SLA STATISTICS
+==================================================== */}
+
+<section className="sla-statistics-section">
+
+  <div className="sla-statistics-header">
+    <div>
+      <span className="sla-statistics-eyebrow">
+        SERVICE LEVEL AGREEMENT
+      </span>
+
+      <h2>SLA Statistics</h2>
+
+      <p>
+        Real-time overview of response and resolution SLA performance.
+      </p>
+    </div>
+
+    <div className="sla-statistics-icon">
+      ⏱️
+    </div>
+  </div>
+
+  <div className="sla-statistics-grid">
+
+    {/* TOTAL */}
+    <div className="sla-statistics-card sla-total-card">
+      <div className="sla-statistics-card-icon">
+        🎫
+      </div>
+
+      <div className="sla-statistics-card-content">
+        <span>Total Tickets</span>
+
+        <strong>
+          {slaStatistics.total}
+        </strong>
+
+        <small>
+          Tickets monitored
+        </small>
+      </div>
+    </div>
+
+    {/* WITHIN SLA */}
+    <div className="sla-statistics-card sla-within-card">
+      <div className="sla-statistics-card-icon">
+        🟢
+      </div>
+
+      <div className="sla-statistics-card-content">
+        <span>Within SLA</span>
+
+        <strong>
+          {slaStatistics.withinSla}
+        </strong>
+
+        <small>
+          {slaStatistics.withinSlaPercentage}% of tickets
+        </small>
+      </div>
+    </div>
+
+    {/* WARNING */}
+    <div className="sla-statistics-card sla-warning-card">
+      <div className="sla-statistics-card-icon">
+        ⚠️
+      </div>
+
+      <div className="sla-statistics-card-content">
+        <span>Approaching Breach</span>
+
+        <strong>
+          {slaStatistics.warning}
+        </strong>
+
+        <small>
+          {slaStatistics.warningPercentage}% of tickets
+        </small>
+      </div>
+    </div>
+
+    {/* BREACHED */}
+    <div className="sla-statistics-card sla-breached-card">
+      <div className="sla-statistics-card-icon">
+        🚨
+      </div>
+
+      <div className="sla-statistics-card-content">
+        <span>Breached</span>
+
+        <strong>
+          {slaStatistics.breached}
+        </strong>
+
+        <small>
+          {slaStatistics.breachedPercentage}% of tickets
+        </small>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+      {/* ====================================================
+          SLA ANALYTICS
+      ==================================================== */}
+
+      <section className="sla-analytics-section">
+
+        <div className="sla-analytics-header">
+
+          <div>
+            <span className="sla-statistics-eyebrow">
+              SLA PERFORMANCE
+            </span>
+
+            <h2>SLA Analytics</h2>
+
+            <p>
+              Detailed response, resolution and priority-wise SLA performance.
+            </p>
+          </div>
+
+          <div className="sla-statistics-icon">
+            📈
+          </div>
+
+        </div>
+
+
+        {/* RESPONSE + RESOLUTION */}
+
+        <div className="sla-analytics-summary-grid">
+
+          <div className="sla-analytics-summary-card">
+
+            <div className="sla-analytics-summary-icon">
+              💬
+            </div>
+
+            <div className="sla-analytics-summary-content">
+
+              <span>Response SLA</span>
+
+              <strong>
+                {slaAnalytics.responseCompleted}
+                <small> Completed</small>
+              </strong>
+
+              <div className="sla-analytics-summary-meta">
+
+                <span>
+                  🚨 {slaAnalytics.responseBreached} Breached
+                </span>
+
+                <span>
+                  {slaAnalytics.responseBreachRate}% Breach Rate
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div className="sla-analytics-summary-card">
+
+            <div className="sla-analytics-summary-icon">
+              ✅
+            </div>
+
+            <div className="sla-analytics-summary-content">
+
+              <span>Resolution SLA</span>
+
+              <strong>
+                {slaAnalytics.resolutionCompleted}
+                <small> Completed</small>
+              </strong>
+
+              <div className="sla-analytics-summary-meta">
+
+                <span>
+                  🚨 {slaAnalytics.resolutionBreached} Breached
+                </span>
+
+                <span>
+                  {slaAnalytics.resolutionBreachRate}% Breach Rate
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* PRIORITY-WISE SLA */}
+
+        <div className="sla-priority-analytics-card">
+
+          <div className="sla-priority-analytics-header">
+
+            <div>
+
+              <span className="sla-statistics-eyebrow">
+                PRIORITY PERFORMANCE
+              </span>
+
+              <h3>Priority-wise SLA Performance</h3>
+
+              <p>
+                SLA status breakdown across different ticket priorities.
+              </p>
+
+            </div>
+
+            <span className="sla-priority-analytics-icon">
+              🎯
+            </span>
+
+          </div>
+
+
+          <div className="sla-priority-table-wrapper">
+
+            <table className="sla-priority-table">
+
+              <thead>
+
+                <tr>
+                  <th>Priority</th>
+                  <th>Total</th>
+                  <th>Within SLA</th>
+                  <th>Warning</th>
+                  <th>Breached</th>
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                {["Urgent", "High", "Medium", "Low"].map(
+                  (priority) => {
+
+                    const data =
+                      slaAnalytics.priorityData[priority] || {
+                        total: 0,
+                        withinSla: 0,
+                        warning: 0,
+                        breached: 0,
+                      };
+
+                    return (
+
+                      <tr key={priority}>
+
+                        <td>
+                          <span
+                            className={`sla-priority-badge sla-priority-${priority.toLowerCase()}`}
+                          >
+                            {priority}
+                          </span>
+                        </td>
+
+                        <td>
+                          <strong>
+                            {data.total}
+                          </strong>
+                        </td>
+
+                        <td>
+                          <span className="sla-table-within">
+                            {data.withinSla}
+                          </span>
+                        </td>
+
+                        <td>
+                          <span className="sla-table-warning">
+                            {data.warning}
+                          </span>
+                        </td>
+
+                        <td>
+                          <span className="sla-table-breached">
+                            {data.breached}
+                          </span>
+                        </td>
+
+                      </tr>
+
+                    );
+
+                  }
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ====================================================
+          SLA VISUAL ANALYTICS
+      ==================================================== */}
+
+      <section className="sla-chart-section">
+        <div className="sla-chart-header">
+          <div>
+            <span className="sla-statistics-eyebrow">
+              VISUAL ANALYTICS
+            </span>
+            <h2>SLA Breach Comparison</h2>
+            <p>
+              Response and resolution SLA performance at a glance.
+            </p>
+          </div>
+
+          <div className="sla-statistics-icon">📊</div>
+        </div>
+
+        <div className="sla-chart-card">
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart
+              data={slaChartData}
+              margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+              barGap={14}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="rgba(255,255,255,0.08)"
+              />
+
+              <XAxis
+                dataKey="name"
+                tick={{ fill: "#9ca9bc", fontSize: 12 }}
+                axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                tickLine={false}
+              />
+
+              <YAxis
+                allowDecimals={false}
+                tick={{ fill: "#9ca9bc", fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+
+              <Tooltip
+                cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                contentStyle={{
+                  background: "#101827",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  borderRadius: "12px",
+                  color: "#ffffff",
+                }}
+              />
+
+              <Legend
+                wrapperStyle={{
+                  paddingTop: "14px",
+                  color: "#cbd5e1",
+                }}
+              />
+
+              <Bar
+                dataKey="Completed"
+                fill="#4ade80"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={55}
+              />
+
+              <Bar
+                dataKey="Breached"
+                fill="#fb7185"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={55}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+
+      {/* ====================================================
+          PRIORITY-WISE SLA VISUAL ANALYTICS
+      ==================================================== */}
+
+      <section className="sla-chart-section">
+        <div className="sla-chart-header">
+          <div>
+            <span className="sla-statistics-eyebrow">
+              PRIORITY VISUAL ANALYTICS
+            </span>
+
+            <h2>Priority-wise SLA Performance</h2>
+
+            <p>
+              Compare SLA performance across Urgent, High, Medium and Low priority tickets.
+            </p>
+          </div>
+
+          <div className="sla-statistics-icon">🎯</div>
+        </div>
+
+        <div className="sla-chart-card">
+          <ResponsiveContainer width="100%" height={340}>
+            <BarChart
+              data={prioritySlaChartData}
+              margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+              barGap={8}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="rgba(255,255,255,0.08)"
+              />
+
+              <XAxis
+                dataKey="name"
+                tick={{ fill: "#9ca9bc", fontSize: 12 }}
+                axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                tickLine={false}
+              />
+
+              <YAxis
+                allowDecimals={false}
+                tick={{ fill: "#9ca9bc", fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+              />
+
+              <Tooltip
+                cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                contentStyle={{
+                  background: "#101827",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  borderRadius: "12px",
+                  color: "#ffffff",
+                }}
+              />
+
+              <Legend
+                wrapperStyle={{
+                  paddingTop: "14px",
+                  color: "#cbd5e1",
+                }}
+              />
+
+              <Bar
+                dataKey="Within SLA"
+                fill="#4ade80"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={45}
+              />
+
+              <Bar
+                dataKey="Warning"
+                fill="#facc15"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={45}
+              />
+
+              <Bar
+                dataKey="Breached"
+                fill="#fb7185"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={45}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+
+      {/* ====================================================
+          ANALYTICS
+      ==================================================== */}
+
+      <div className="dashboard-analytics">
+
+        {/* STATUS ANALYTICS */}
+        <div className="analytics-card">
+          <div className="analytics-card-header">
+            <div>
+              <span className="analytics-eyebrow">
+                TICKET STATUS
+              </span>
+              <h2>Status Overview</h2>
+            </div>
+            <span className="analytics-icon">📊</span>
+          </div>
+
+          <div className="analytics-list">
+            {Object.entries(analytics.statusCounts).map(
+              ([status, count]) => (
+                <div
+                  className="analytics-row"
+                  key={status}
+                >
+                  <div className="analytics-row-info">
+                    <span>{status}</span>
+                    <strong>{count}</strong>
+                  </div>
+
+                  <div className="analytics-progress">
+                    <div
+                      className="analytics-progress-fill"
+                      style={{
+                        width: `${
+                          totalTickets
+                            ? (count / totalTickets) * 100
+                            : 0
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* PRIORITY ANALYTICS */}
+        <div className="analytics-card">
+          <div className="analytics-card-header">
+            <div>
+              <span className="analytics-eyebrow">
+                TICKET PRIORITY
+              </span>
+              <h2>Priority Overview</h2>
+            </div>
+            <span className="analytics-icon">🚨</span>
+          </div>
+
+          <div className="analytics-list">
+            {Object.entries(analytics.priorityCounts).map(
+              ([priority, count]) => (
+                <div
+                  className="analytics-row"
+                  key={priority}
+                >
+                  <div className="analytics-row-info">
+                    <span>{priority}</span>
+                    <strong>{count}</strong>
+                  </div>
+
+                  <div className="analytics-progress">
+                    <div
+                      className={`analytics-progress-fill priority-${priority.toLowerCase()}`}
+                      style={{
+                        width: `${
+                          totalTickets
+                            ? (count / totalTickets) * 100
+                            : 0
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* CATEGORY ANALYTICS */}
+        <div className="analytics-card analytics-category-card">
+          <div className="analytics-card-header">
+            <div>
+              <span className="analytics-eyebrow">
+                TICKET CATEGORIES
+              </span>
+              <h2>Category Overview</h2>
+            </div>
+            <span className="analytics-icon">📁</span>
+          </div>
+
+          <div className="analytics-list">
+            {Object.entries(analytics.categoryCounts).length ===
+            0 ? (
+              <div className="analytics-empty">
+                No category data available.
+              </div>
+            ) : (
+              Object.entries(analytics.categoryCounts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([category, count]) => (
+                  <div
+                    className="analytics-row"
+                    key={category}
+                  >
+                    <div className="analytics-row-info">
+                      <span>{category}</span>
+                      <strong>{count}</strong>
+                    </div>
+
+                    <div className="analytics-progress">
+                      <div
+                        className="analytics-progress-fill"
+                        style={{
+                          width: `${
+                            totalTickets
+                              ? (count / totalTickets) * 100
+                              : 0
+                          }%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+        </div>
+
+      </div>
+      
+
+      {/* ====================================================
+          REAL DATA GRAPHS
+      ==================================================== */}
+
+      <section className="dashboard-graphs">
+
+        {/* TICKET CREATION TREND */}
+        <div className="dashboard-graph-card ticket-trend-graph">
+
+          <div className="graph-card-header">
+            <div>
+              <span className="graph-eyebrow">
+                LAST 7 DAYS
+              </span>
+              <h2>Ticket Creation Trend</h2>
+              <p>
+                Daily ticket volume based on actual created tickets.
+              </p>
+            </div>
+
+            <div className="graph-header-icon">
+              📈
+            </div>
+          </div>
+
+          <div className="line-chart-wrapper">
+
+            <div className="line-chart-y-axis">
+              <span>{trendMax}</span>
+              <span>{Math.ceil(trendMax * 0.75)}</span>
+              <span>{Math.ceil(trendMax * 0.5)}</span>
+              <span>{Math.ceil(trendMax * 0.25)}</span>
+              <span>0</span>
+            </div>
+
+            <div className="line-chart-main">
+
+              <div className="chart-grid-lines">
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+
+              <svg
+                className="ticket-line-chart"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                aria-label="Ticket creation trend"
+              >
+                <polyline
+                  points={trendPoints}
+                  fill="none"
+                  className="trend-line"
+                  vectorEffect="non-scaling-stroke"
+                />
+
+                {ticketTrend.map((item, index) => {
+                  const x =
+                    ticketTrend.length === 1
+                      ? 50
+                      : (index / (ticketTrend.length - 1)) * 100;
+
+                  const y =
+                    90 - (item.count / trendMax) * 70;
+
+                  return (
+                    <circle
+                      key={item.key}
+                      cx={x}
+                      cy={y}
+                      r="1.6"
+                      className="trend-point"
+                    />
+                  );
+                })}
+              </svg>
+
+              <div className="line-chart-labels">
+                {ticketTrend.map((item) => (
+                  <div key={item.key}>
+                    <strong>{item.label}</strong>
+                    <span>{item.shortDate}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="trend-tooltip-row">
+                {ticketTrend.map((item) => (
+                  <div key={item.key}>
+                    <span>{item.count}</span>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </div>
+
+          <div className="graph-summary">
+            <span>
+              <i className="graph-dot" />
+              Total created in 7 days
+            </span>
+            <strong>
+              {ticketTrend.reduce(
+                (sum, item) => sum + item.count,
+                0
+              )}
+            </strong>
+          </div>
+
+        </div>
+
+        {/* STATUS DISTRIBUTION */}
+        <div className="dashboard-graph-card status-distribution-graph">
+
+          <div className="graph-card-header">
+            <div>
+              <span className="graph-eyebrow">
+                CURRENT STATUS
+              </span>
+              <h2>Status Distribution</h2>
+              <p>
+                Current distribution of all support tickets.
+              </p>
+            </div>
+
+            <div className="graph-header-icon">
+              📊
+            </div>
+          </div>
+
+          <div className="status-chart-body">
+
+            <div className="status-donut">
+              <div className="status-donut-inner">
+                <strong>{statusTotal}</strong>
+                <span>Total</span>
+              </div>
+            </div>
+
+            <div className="status-bars">
+              {statusGraphData.map((item) => (
+                <div
+                  className="status-graph-row"
+                  key={item.label}
+                >
+                  <div className="status-graph-label">
+                    <span>
+                      <i
+                        className={`status-graph-dot ${item.className}`}
+                      />
+                      {item.label}
+                    </span>
+
+                    <strong>{item.count}</strong>
+                  </div>
+
+                  <div className="status-graph-track">
+                    <div
+                      className={`status-graph-fill ${item.className}`}
+                      style={{
+                        width: `${
+                          (item.count / statusBarsMax) * 100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+
+          <div className="graph-summary status-summary">
+            <span>
+              Active tickets
+            </span>
+            <strong>
+              {openTickets + inProgressTickets}
+            </strong>
+          </div>
+
+        </div>
+
+      </section>
+
       {/* ====================================================
           SEARCH + FILTER PANEL
       ==================================================== */}
@@ -847,6 +2541,10 @@ function Dashboard() {
 
               <option>
                 In Progress
+              </option>
+
+              <option>
+                Waiting for Customer
               </option>
 
               <option>
@@ -938,6 +2636,111 @@ function Dashboard() {
 
           </div>
 
+          {/* ASSIGNED AGENT */}
+
+          <div className="filter-control">
+
+            <label>
+              Assigned Agent
+            </label>
+
+            <select
+              className="filter-select"
+              value={agentFilter}
+              onChange={(e) =>
+                setAgentFilter(e.target.value)
+              }
+            >
+              <option value="All Agents">
+                All Agents
+              </option>
+
+              {agents.map((agent) => (
+                <option
+                  key={agent._id}
+                  value={agent._id}
+                >
+                  {agent.name}
+                </option>
+              ))}
+            </select>
+
+          </div>
+
+          {/* CUSTOMER */}
+
+          <div className="filter-control">
+
+            <label>
+              Customer
+            </label>
+
+            <select
+              className="filter-select"
+              value={customerFilter}
+              onChange={(e) =>
+                setCustomerFilter(e.target.value)
+              }
+            >
+              <option value="All Customers">
+                All Customers
+              </option>
+
+              {customers.map((customer) => (
+                <option
+                  key={customer.id}
+                  value={customer.id}
+                >
+                  {customer.name}
+                  {customer.email
+                    ? ` — ${customer.email}`
+                    : ""}
+                </option>
+              ))}
+            </select>
+
+          </div>
+
+          {/* FROM DATE */}
+
+          <div className="filter-control">
+
+            <label>
+              From Date
+            </label>
+
+            <input
+              type="date"
+              className="filter-select"
+              value={fromDate}
+              max={toDate || undefined}
+              onChange={(e) =>
+                setFromDate(e.target.value)
+              }
+            />
+
+          </div>
+
+          {/* TO DATE */}
+
+          <div className="filter-control">
+
+            <label>
+              To Date
+            </label>
+
+            <input
+              type="date"
+              className="filter-select"
+              value={toDate}
+              min={fromDate || undefined}
+              onChange={(e) =>
+                setToDate(e.target.value)
+              }
+            />
+
+          </div>
+
           {/* SORT */}
 
           <div className="filter-control">
@@ -1003,7 +2806,13 @@ function Dashboard() {
           priorityFilter !==
             "All Priority" ||
           categoryFilter !==
-            "All Categories") && (
+            "All Categories" ||
+          agentFilter !==
+            "All Agents" ||
+          customerFilter !==
+            "All Customers" ||
+          fromDate ||
+          toDate) && (
           <div className="filter-active-label">
             Filters active
           </div>
@@ -1145,6 +2954,222 @@ function Dashboard() {
               </div>
 
               {/* ==========================================
+    CUSTOMER LOCATION
+========================================== */}
+
+{ticket.location?.latitude !== null &&
+ ticket.location?.latitude !== undefined &&
+ ticket.location?.longitude !== null &&
+ ticket.location?.longitude !== undefined &&
+ !(Number(ticket.location.latitude) === 0 &&
+   Number(ticket.location.longitude) === 0) && (
+    
+  <div
+    className="customer-location-section"
+    style={{
+      marginTop: "24px",
+      padding: "20px",
+      border: "1px solid rgba(99, 102, 241, 0.25)",
+      borderRadius: "16px",
+      background: "rgba(15, 23, 42, 0.55)",
+    }}
+  >
+    {/* HEADER */}
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "16px",
+        marginBottom: "16px",
+        flexWrap: "wrap",
+      }}
+    >
+      <div>
+        <h3
+          style={{
+            margin: 0,
+            fontSize: "18px",
+          }}
+        >
+          📍 Customer Location
+        </h3>
+
+        <p
+          style={{
+            margin: "6px 0 0",
+            color: "#94a3b8",
+            fontSize: "13px",
+          }}
+        >
+          Location captured when the ticket was created.
+        </p>
+      </div>
+
+      <a
+        href={`https://www.google.com/maps?q=${ticket.location.latitude},${ticket.location.longitude}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          padding: "10px 14px",
+          borderRadius: "10px",
+          background: "#4f46e5",
+          color: "#ffffff",
+          textDecoration: "none",
+          fontWeight: "600",
+          fontSize: "13px",
+          whiteSpace: "nowrap",
+        }}
+      >
+        🗺️ Open in Google Maps
+      </a>
+    </div>
+
+    {/* LOCATION DETAILS */}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        gap: "12px",
+        marginBottom: "12px",
+      }}
+    >
+      {/* LATITUDE */}
+      <div
+        style={{
+          padding: "12px",
+          borderRadius: "10px",
+          background: "rgba(255,255,255,0.04)",
+        }}
+      >
+        <span
+          style={{
+            display: "block",
+            color: "#94a3b8",
+            fontSize: "12px",
+            marginBottom: "5px",
+          }}
+        >
+          Latitude
+        </span>
+
+        <strong>
+          {Number(ticket.location.latitude).toFixed(6)}
+        </strong>
+      </div>
+
+      {/* LONGITUDE */}
+      <div
+        style={{
+          padding: "12px",
+          borderRadius: "10px",
+          background: "rgba(255,255,255,0.04)",
+        }}
+      >
+        <span
+          style={{
+            display: "block",
+            color: "#94a3b8",
+            fontSize: "12px",
+            marginBottom: "5px",
+          }}
+        >
+          Longitude
+        </span>
+
+        <strong>
+          {Number(ticket.location.longitude).toFixed(6)}
+        </strong>
+      </div>
+    </div>
+
+    {/* ACCURACY + CAPTURE TIME */}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        gap: "12px",
+        marginBottom: "16px",
+      }}
+    >
+      {/* ACCURACY */}
+      <div
+        style={{
+          padding: "12px",
+          borderRadius: "10px",
+          background: "rgba(255,255,255,0.04)",
+        }}
+      >
+        <span
+          style={{
+            display: "block",
+            color: "#94a3b8",
+            fontSize: "12px",
+            marginBottom: "5px",
+          }}
+        >
+          🎯 Location Accuracy
+        </span>
+
+        <strong>
+          {ticket.location.accuracy !== null &&
+          ticket.location.accuracy !== undefined &&
+          Number.isFinite(Number(ticket.location.accuracy))
+            ? `±${Number(ticket.location.accuracy).toFixed(1)} meters`
+            : "Not available"}
+        </strong>
+      </div>
+
+      {/* CAPTURED TIME */}
+      <div
+        style={{
+          padding: "12px",
+          borderRadius: "10px",
+          background: "rgba(255,255,255,0.04)",
+        }}
+      >
+        <span
+          style={{
+            display: "block",
+            color: "#94a3b8",
+            fontSize: "12px",
+            marginBottom: "5px",
+          }}
+        >
+          🕒 Captured At
+        </span>
+
+        <strong>
+          {ticket.location.capturedAt
+            ? new Date(ticket.location.capturedAt).toLocaleString(
+                "en-IN",
+                {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                }
+              )
+            : "Not available"}
+        </strong>
+      </div>
+    </div>
+
+    {/* MAP */}
+    <iframe
+      title="Customer Location Map"
+      src={`https://www.google.com/maps?q=${ticket.location.latitude},${ticket.location.longitude}&z=15&output=embed`}
+      width="100%"
+      height="280"
+      style={{
+        border: 0,
+        borderRadius: "12px",
+      }}
+      loading="lazy"
+      referrerPolicy="no-referrer-when-downgrade"
+    />
+  </div>
+)}
+
+              {/* ==========================================
                   DESCRIPTION
               ========================================== */}
 
@@ -1215,7 +3240,154 @@ function Dashboard() {
 
               </div>
 
-              {/* ==========================================
+            {/* ==========================================
+    SLA COUNTDOWN + NEAR-BREACH WARNING
+========================================== */}
+
+<div className="ticket-sla-section">
+
+  <div className="sla-header">
+    <div>
+      <span className="sla-label">
+        ⏱️ SLA STATUS
+      </span>
+
+      <p className="sla-description">
+        Live response and resolution countdown
+      </p>
+    </div>
+  </div>
+
+  <div className="sla-countdown-grid">
+
+    {/* ==========================
+        FIRST RESPONSE SLA
+    ========================== */}
+
+    {(() => {
+      const responseSeconds = getRemainingSeconds(
+        ticket.slaStatus?.responseDeadline
+      );
+
+      const responseClass =
+        getSlaWarningClass(responseSeconds);
+
+      return (
+        <div
+          className={`sla-countdown-card ${responseClass}`}
+        >
+          <span className="sla-countdown-title">
+            First Response
+          </span>
+
+          <strong>
+            {formatSlaCountdown(responseSeconds)}
+          </strong>
+
+          {/* NORMAL */}
+          {responseSeconds !== null &&
+            responseSeconds > 60 * 60 && (
+              <small className="sla-status-message">
+                🟢 SLA within target
+              </small>
+            )}
+
+          {/* NEAR BREACH */}
+          {responseSeconds !== null &&
+            responseSeconds > 15 * 60 &&
+            responseSeconds <= 60 * 60 && (
+              <small className="sla-status-message">
+                ⚠️ SLA approaching breach
+              </small>
+            )}
+
+          {/* CRITICAL */}
+          {responseSeconds !== null &&
+            responseSeconds > 0 &&
+            responseSeconds <= 15 * 60 && (
+              <small className="sla-status-message">
+                🔴 Critical — less than 15 minutes
+              </small>
+            )}
+
+          {/* BREACHED */}
+          {responseSeconds !== null &&
+            responseSeconds <= 0 && (
+              <small className="sla-status-message">
+                🚨 Response SLA breached
+              </small>
+            )}
+        </div>
+      );
+    })()}
+
+
+    {/* ==========================
+        RESOLUTION SLA
+    ========================== */}
+
+    {(() => {
+      const resolutionSeconds = getRemainingSeconds(
+        ticket.slaStatus?.resolutionDeadline
+      );
+
+      const resolutionClass =
+        getSlaWarningClass(resolutionSeconds);
+
+      return (
+        <div
+          className={`sla-countdown-card ${resolutionClass}`}
+        >
+          <span className="sla-countdown-title">
+            Resolution
+          </span>
+
+          <strong>
+            {formatSlaCountdown(resolutionSeconds)}
+          </strong>
+
+          {/* NORMAL */}
+          {resolutionSeconds !== null &&
+            resolutionSeconds > 60 * 60 && (
+              <small className="sla-status-message">
+                🟢 SLA within target
+              </small>
+            )}
+
+          {/* NEAR BREACH */}
+          {resolutionSeconds !== null &&
+            resolutionSeconds > 15 * 60 &&
+            resolutionSeconds <= 60 * 60 && (
+              <small className="sla-status-message">
+                ⚠️ SLA approaching breach
+              </small>
+            )}
+
+          {/* CRITICAL */}
+          {resolutionSeconds !== null &&
+            resolutionSeconds > 0 &&
+            resolutionSeconds <= 15 * 60 && (
+              <small className="sla-status-message">
+                🔴 Critical — less than 15 minutes
+              </small>
+            )}
+
+          {/* BREACHED */}
+          {resolutionSeconds !== null &&
+            resolutionSeconds <= 0 && (
+              <small className="sla-status-message">
+                🚨 Resolution SLA breached
+              </small>
+            )}
+        </div>
+      );
+    })()}
+
+  </div>
+
+</div>
+
+             {/* ==========================================
                   ASSIGNMENT
               ========================================== */}
 
@@ -1229,8 +3401,7 @@ function Dashboard() {
                     </span>
 
                     <p className="assignment-description">
-                      Assign this ticket to an
-                      admin/support agent.
+                      Assign this ticket to a support agent.
                     </p>
                   </div>
 
@@ -1256,7 +3427,7 @@ function Dashboard() {
                         ticket._id ||
                       deletingId ===
                         ticket._id ||
-                      adminsLoading
+                      agentsLoading
                     }
                     onChange={(e) =>
                       assignTicket(
@@ -1267,19 +3438,19 @@ function Dashboard() {
                   >
 
                     <option value="">
-                      {adminsLoading
-                        ? "Loading Admins..."
+                      {agentsLoading
+                        ? "Loading Support Agents..."
                         : "Unassigned"}
                     </option>
 
-                    {admins.map(
-                      (admin) => (
+                    {agents.map(
+                      (agent) => (
                         <option
-                          key={admin._id}
-                          value={admin._id}
+                          key={agent._id}
+                          value={agent._id}
                         >
-                          {admin.name} —{" "}
-                          {admin.email}
+                          {agent.name} —{" "}
+                          {agent.email}
                         </option>
                       )
                     )}
@@ -1337,10 +3508,10 @@ function Dashboard() {
                 )}
 
                 {!ticket.assignedTo &&
-                  !adminsLoading &&
-                  admins.length === 0 && (
+                  !agentsLoading &&
+                  agents.length === 0 && (
                     <p className="no-admins-message">
-                      ⚠️ No admin users found.
+                      ⚠️ No support agents found.
                     </p>
                   )}
 
@@ -1384,6 +3555,10 @@ function Dashboard() {
 
                     <option>
                       In Progress
+                    </option>
+
+                    <option>
+                      Waiting for Customer
                     </option>
 
                     <option>

@@ -1,0 +1,462 @@
+
+/* ==========================================================
+   SUPPORTFLOW - REAL DATA GRAPHS
+   ========================================================== */
+
+.dashboard-graphs {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.9fr);
+  gap: 22px;
+  margin: 24px 0;
+}
+
+.dashboard-graph-card {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(15, 23, 42, 0.98),
+      rgba(10, 18, 35, 0.94)
+    );
+  box-shadow:
+    0 20px 45px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.dashboard-graph-card::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.07);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.graph-card-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.graph-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #60a5fa;
+}
+
+.graph-card-header h2 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.25;
+  color: #f8fafc;
+}
+
+.graph-card-header p {
+  margin: 7px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+.graph-header-icon {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  border-radius: 13px;
+  background: rgba(59, 130, 246, 0.09);
+  font-size: 19px;
+}
+
+/* ------------------------------
+   LINE CHART
+   ------------------------------ */
+
+.line-chart-wrapper {
+  display: flex;
+  min-height: 250px;
+}
+
+.line-chart-y-axis {
+  display: flex;
+  width: 34px;
+  padding: 3px 8px 35px 0;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.line-chart-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 215px;
+}
+
+.chart-grid-lines {
+  position: absolute;
+  inset: 5px 0 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.chart-grid-lines span {
+  display: block;
+  width: 100%;
+  border-top: 1px dashed rgba(148, 163, 184, 0.12);
+}
+
+.ticket-line-chart {
+  position: absolute;
+  inset: 5px 0 38px;
+  width: 100%;
+  height: calc(100% - 38px);
+  overflow: visible;
+}
+
+.trend-line {
+  stroke: #60a5fa;
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 5px rgba(96, 165, 250, 0.45));
+}
+
+.trend-point {
+  fill: #0f172a;
+  stroke: #60a5fa;
+  stroke-width: 0.7;
+}
+
+.line-chart-labels {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.line-chart-labels > div {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.line-chart-labels strong {
+  font-size: 10px;
+  color: #cbd5e1;
+}
+
+.line-chart-labels span {
+  font-size: 9px;
+  color: #64748b;
+}
+
+.trend-tooltip-row {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.trend-tooltip-row > div {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+}
+
+.trend-tooltip-row span {
+  min-width: 20px;
+  padding: 3px 5px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #93c5fd;
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.ticket-trend-graph:hover .trend-tooltip-row span {
+  opacity: 1;
+}
+
+.graph-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.graph-summary span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.graph-summary strong {
+  font-size: 18px;
+  color: #f8fafc;
+}
+
+.graph-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #60a5fa;
+  box-shadow: 0 0 9px rgba(96, 165, 250, 0.65);
+}
+
+/* ------------------------------
+   STATUS GRAPH
+   ------------------------------ */
+
+.status-chart-body {
+  display: flex;
+  min-height: 250px;
+  align-items: center;
+  gap: 28px;
+}
+
+.status-donut {
+  position: relative;
+  display: grid;
+  flex: 0 0 145px;
+  width: 145px;
+  height: 145px;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(
+    #3b82f6 0deg 72deg,
+    #f59e0b 72deg 144deg,
+    #a78bfa 144deg 216deg,
+    #22c55e 216deg 288deg,
+    #64748b 288deg 360deg
+  );
+  box-shadow:
+    0 0 35px rgba(59, 130, 246, 0.08),
+    inset 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+/* The visual ring is proportional to the data through the bar chart;
+   the center remains readable even when some statuses are zero. */
+.status-donut::after {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background: #0f172a;
+}
+
+.status-donut-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.status-donut-inner strong {
+  font-size: 25px;
+  line-height: 1;
+  color: #f8fafc;
+}
+
+.status-donut-inner span {
+  margin-top: 5px;
+  font-size: 9px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.status-bars {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.status-graph-row {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.status-graph-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #cbd5e1;
+  font-size: 11px;
+}
+
+.status-graph-label span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.status-graph-label strong {
+  color: #f8fafc;
+  font-size: 12px;
+}
+
+.status-graph-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+}
+
+.status-graph-track {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.status-graph-fill {
+  height: 100%;
+  min-width: 2px;
+  border-radius: inherit;
+  transition: width 0.45s ease;
+}
+
+.graph-open {
+  background: #3b82f6;
+}
+
+.graph-progress {
+  background: #f59e0b;
+}
+
+.graph-waiting {
+  background: #a78bfa;
+}
+
+.graph-resolved {
+  background: #22c55e;
+}
+
+.graph-closed {
+  background: #64748b;
+}
+
+.status-summary {
+  margin-top: 0;
+}
+
+.status-summary span {
+  color: #64748b;
+}
+
+/* ------------------------------
+   RESPONSIVE
+   ------------------------------ */
+
+@media (max-width: 1050px) {
+  .dashboard-graphs {
+    grid-template-columns: 1fr;
+  }
+
+  .status-chart-body {
+    max-width: 720px;
+  }
+}
+
+@media (max-width: 620px) {
+  .dashboard-graph-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .graph-card-header h2 {
+    font-size: 18px;
+  }
+
+  .graph-card-header p {
+    font-size: 11px;
+  }
+
+  .status-chart-body {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .status-donut {
+    margin: 0 auto;
+  }
+
+  .status-bars {
+    width: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  .dashboard-graphs {
+    gap: 14px;
+    margin: 18px 0;
+  }
+
+  .dashboard-graph-card {
+    padding: 15px;
+  }
+
+  .line-chart-wrapper {
+    min-height: 225px;
+  }
+
+  .line-chart-main {
+    height: 190px;
+  }
+
+  .status-donut {
+    width: 125px;
+    height: 125px;
+    flex-basis: 125px;
+  }
+
+  .status-chart-body {
+    min-height: 0;
+    gap: 22px;
+  }
+}

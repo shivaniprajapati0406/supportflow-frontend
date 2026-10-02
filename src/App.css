@@ -2551,3 +2551,340 @@ button:disabled {
     max-width: 250px;
   }
 }
+/* ==========================================================
+   SUPPORTFLOW - LIGHT / DARK THEME
+   ========================================================== */
+
+/* ---------- LIGHT MODE ---------- */
+
+body.light-mode {
+  background: #f8fafc;
+  color: #111827;
+}
+
+/* Main pages */
+body.light-mode .admin-dashboard,
+body.light-mode .ticket-details-page {
+  background: #f8fafc;
+  color: #111827;
+}
+
+/* Cards */
+body.light-mode .stat-card,
+body.light-mode .admin-ticket-card,
+body.light-mode .dashboard-message,
+body.light-mode .ticket-details-card,
+body.light-mode .professional-ticket-card,
+body.light-mode .professional-chat-card,
+body.light-mode .professional-admin-control,
+body.light-mode .ticket-loading-card {
+  background: #ffffff;
+  border-color: #e5e7eb;
+  color: #111827;
+}
+
+/* Headings */
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode strong {
+  color: #111827;
+}
+
+/* Secondary text */
+body.light-mode .admin-dashboard-header p,
+body.light-mode .results-info,
+body.light-mode .customer-details p,
+body.light-mode .description-section p,
+body.light-mode .ticket-description-section p,
+body.light-mode .professional-description p,
+body.light-mode .conversation-header p,
+body.light-mode .professional-admin-control p {
+  color: #64748b;
+}
+
+/* Search */
+body.light-mode .search-input,
+body.light-mode .filter-select {
+  background: #ffffff;
+  color: #111827;
+  border-color: #cbd5e1;
+}
+
+body.light-mode .search-input::placeholder {
+  color: #94a3b8;
+}
+
+body.light-mode .filter-select option {
+  background: #ffffff;
+  color: #111827;
+}
+
+/* Ticket detail information */
+body.light-mode .ticket-details-grid div,
+body.light-mode .ticket-details-card .ticket-info-grid div,
+body.light-mode .professional-info-card {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+body.light-mode .ticket-details-grid span,
+body.light-mode .ticket-details-card .ticket-info-grid span,
+body.light-mode .professional-info-card span {
+  color: #64748b;
+}
+
+body.light-mode .ticket-details-grid strong,
+body.light-mode .ticket-details-card .ticket-info-grid strong,
+body.light-mode .professional-info-card strong {
+  color: #111827;
+}
+
+/* Borders */
+body.light-mode .admin-card-header,
+body.light-mode .description-section,
+body.light-mode .ticket-details-grid,
+body.light-mode .status-update,
+body.light-mode .conversation-section,
+body.light-mode .reply-form,
+body.light-mode .ticket-status-update,
+body.light-mode .professional-ticket-header,
+body.light-mode .professional-description,
+body.light-mode .professional-chat-header,
+body.light-mode .professional-reply-form {
+  border-color: #e2e8f0;
+}
+
+/* Status update */
+body.light-mode .status-update label {
+  color: #374151;
+}
+
+body.light-mode .status-update select,
+body.light-mode .ticket-status-update select {
+  background: #ffffff;
+  color: #111827;
+  border-color: #cbd5e1;
+}
+
+/* Conversation */
+body.light-mode .reply-count {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+body.light-mode .no-replies {
+  background: #f8fafc;
+}
+
+body.light-mode .no-replies p {
+  color: #64748b;
+}
+
+/* Reply form */
+body.light-mode .reply-form textarea {
+  background: #ffffff;
+  color: #111827;
+  border-color: #cbd5e1;
+}
+
+body.light-mode .reply-form textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* Closed ticket */
+body.light-mode .closed-ticket-message,
+body.light-mode .professional-closed-message {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+
+/* ==========================================================
+   PROFESSIONAL CHAT - LIGHT MODE
+========================================================== */
+
+body.light-mode .professional-chat-header {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+body.light-mode .professional-chat-header p {
+  color: #64748b;
+}
+
+body.light-mode .message-counter {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+body.light-mode .professional-chat-body {
+  background: #f8fafc;
+}
+
+body.light-mode .professional-empty-chat h3 {
+  color: #111827;
+}
+
+body.light-mode .professional-empty-chat p {
+  color: #64748b;
+}
+
+body.light-mode .empty-chat-icon {
+  background: #e2e8f0;
+}
+
+body.light-mode .message-name-line strong {
+  color: #334155;
+}
+
+body.light-mode .message-bubble-customer {
+  background: #ffffff;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+body.light-mode .professional-reply-form {
+  background: #ffffff;
+}
+
+body.light-mode .reply-input-wrapper {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+body.light-mode .reply-input-wrapper textarea {
+  color: #111827;
+}
+
+body.light-mode .reply-input-wrapper textarea::placeholder {
+  color: #94a3b8;
+}
+
+body.light-mode .reply-input-footer {
+  border-color: #e2e8f0;
+}
+
+
+/* ==========================================================
+   PROFESSIONAL ACTIVITY - LIGHT MODE
+========================================================== */
+
+body.light-mode .professional-activity-card {
+  background: #ffffff;
+  border-color: #e5e7eb;
+}
+
+body.light-mode .professional-activity-header {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+
+
+/* ==========================================================
+   GLOBAL INPUTS - LIGHT MODE
+========================================================== */
+
+body.light-mode input,
+body.light-mode textarea,
+body.light-mode select {
+  color: #111827;
+}
+
+body.light-mode input::placeholder,
+body.light-mode textarea::placeholder {
+  color: #94a3b8;
+}
+
+
+/* ==========================================================
+   DARK MODE - GLOBAL
+========================================================== */
+
+body.dark-mode {
+  background: #111318;
+  color: #ffffff;
+}
+
+body.dark-mode .admin-dashboard,
+body.dark-mode .ticket-details-page {
+  background: #111318;
+  color: #ffffff;
+}
+
+
+/* ==========================================================
+   SMOOTH THEME TRANSITION
+========================================================== */
+
+body,
+.navbar,
+.admin-dashboard,
+.ticket-details-page,
+.stat-card,
+.admin-ticket-card,
+.dashboard-message,
+.ticket-details-card,
+.professional-ticket-card,
+.professional-chat-card,
+.professional-info-card,
+.professional-admin-control,
+.search-input,
+.filter-select,
+.reply-form textarea,
+.professional-chat-body,
+.professional-reply-form {
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+
+/* ==========================================================
+   LIGHT MODE - SCROLLBAR
+========================================================== */
+
+body.light-mode ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body.light-mode ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+body.light-mode ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+body.light-mode ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+
+/* ==========================================================
+   DARK MODE - SCROLLBAR
+========================================================== */
+
+body.dark-mode ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+  background: #111318;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 10px;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}

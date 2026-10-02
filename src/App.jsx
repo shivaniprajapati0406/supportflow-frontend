@@ -3,6 +3,8 @@ import { Routes, Route } from "react-router-dom";
 import "./App.css";
 
 import Navbar from "./components/Navbar";
+import AIChatbot from "./components/AIChatbot";
+import AIVoiceAssistant from "./components/AIVoiceAssistant";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -18,15 +20,21 @@ import CreateTicket from "./pages/CreateTicket";
 import MyTickets from "./pages/MyTickets";
 import TicketDetails from "./pages/TicketDetails";
 
+// Support Agent Dashboard
+import AgentDashboard from "./pages/AgentDashboard";
+
 function App() {
   return (
     <>
+      {/* ==================================================
+          NAVBAR
+      ================================================== */}
       <Navbar />
 
       <Routes>
 
         {/* ==================================================
-            PUBLIC
+            PUBLIC ROUTES
         ================================================== */}
 
         <Route
@@ -44,62 +52,76 @@ function App() {
           element={<Register />}
         />
 
+
         {/* ==================================================
-            LOGGED-IN USER
+            LOGGED-IN USER ROUTES
         ================================================== */}
 
-        <Route
-          element={<ProtectedRoute />}
-        >
+        <Route element={<ProtectedRoute />}>
 
           <Route
             path="/create-ticket"
-            element={
-              <CreateTicket />
-            }
+            element={<CreateTicket />}
           />
 
           <Route
             path="/my-tickets"
-            element={
-              <MyTickets />
-            }
+            element={<MyTickets />}
           />
 
           <Route
             path="/ticket/:id"
-            element={
-              <TicketDetails />
-            }
+            element={<TicketDetails />}
           />
 
         </Route>
 
+
         {/* ==================================================
-            ADMIN
+            SUPPORT AGENT ROUTE
         ================================================== */}
 
-        <Route
-          element={<AdminRoute />}
-        >
+        <Route element={<ProtectedRoute />}>
+
+          <Route
+            path="/agent-dashboard"
+            element={<AgentDashboard />}
+          />
+
+        </Route>
+
+
+        {/* ==================================================
+            ADMIN ROUTES
+        ================================================== */}
+
+        <Route element={<AdminRoute />}>
 
           <Route
             path="/dashboard"
-            element={
-              <Dashboard />
-            }
+            element={<Dashboard />}
           />
 
           <Route
             path="/analytics"
-            element={
-              <Analytics />
-            }
+            element={<Analytics />}
           />
 
         </Route>
 
       </Routes>
+
+
+      {/* ==================================================
+          AI SUPPORT FEATURES
+      ================================================== */}
+
+      {/* Existing AI Chatbot */}
+      <AIChatbot />
+
+      {/* New AI Voice Assistant */}
+      <AIVoiceAssistant />
+
     </>
   );
 }

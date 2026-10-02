@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import socket from "../api/socket";
+import CallModal from "../components/CallModal";
+import "./TicketDetails.css";
 
 import {
   apiGet,
@@ -16,64 +19,259 @@ function TicketDetails() {
   const [activities, setActivities] = useState([]);
   const [message, setMessage] = useState("");
 
+  const [isTyping, setIsTyping] = useState(false);
+const [typingUser, setTypingUser] = useState("");
+const typingTimeoutRef = useRef(null);
+
+const [readMessages, setReadMessages] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activityLoading, setActivityLoading] =
-    useState(true);
+  const [activityLoading, setActivityLoading] = useState(true);
+
   const [sending, setSending] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  // =====================================================
-  // GET CURRENT USER
-  // =====================================================
-
-  const getCurrentUser = () => {
-    const userData =
-      localStorage.getItem("user");
-
-    if (!userData) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(userData);
-    } catch (error) {
-      console.error(
-        "User Parse Error:",
-        error
-      );
-
-      return null;
-    }
-  };
-
-  // =====================================================
-  // LOAD DATA
-  // =====================================================
+const [aiReplyLoading, setAiReplyLoading] = useState(false);
+const [aiReply, setAiReply] = useState("");
+  // CUSTOMER FEEDBACK
+  const [feedback, setFeedback] = useState(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
+  if (!id) {
+    setLoading(false);
+    return;
+  }
+
+  Promise.all([
+    fetchTicket(),
+    fetchReplies(),
+    fetchActivities(),
+  ]).finally(() => {
+    setLoading(false);
+  });
+}, [id]);
+
+// =====================================================
+// GET CURRENT USER
+// =====================================================
+
+const getCurrentUser = () => {
+  try {
+    const user = localStorage.getItem("user");
+
+    if (!user) {
+      return null;
+    }
+
+    return JSON.parse(user);
+  } catch (error) {
+    console.error("Get Current User Error:", error);
+    return null;
+  }
+};
+
+const user = getCurrentUser();
+const currentUserId = user?._id || user?.id;
+
+// =====================================================
+// SOCKET.IO CONNECTION
+// =====================================================
+
+useEffect(() => {
+  socket.connect();
+
+  socket.on("connect", () => {
+    console.log("Socket connected:", socket.id);
+
+    // Register user for voice calling
+    if (currentUserId) {
+      socket.emit("register_user", {
+        userId: currentUserId,
+      });
+    }
+
+    // Join ticket room
+    if (id) {
+      console.log("Joining ticket room:", id);
+      socket.emit("join_ticket", id);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected");
+  });
+
+    socket.on("new_reply", (newReply) => {
+    console.log("New reply received:", newReply);
+
+    setReplies((prevReplies) => {
+      const alreadyExists = prevReplies.some(
+        (reply) => reply._id === newReply._id
+      );
+
+      if (alreadyExists) {
+        return prevReplies;
+      }
+
+      return [...prevReplies, newReply];
+    });
+  });
+
+  socket.on("user_typing", ({ userName }) => {
+    setTypingUser(userName || "Someone");
+    setIsTyping(true);
+  });
+
+  socket.on("user_stop_typing", () => {
+    setIsTyping(false);
+    setTypingUser("");
+  });
+  // STEP 22 - READ RECEIPTS
+socket.on("message_read", ({ messageId }) => {
+  if (!messageId) {
+    return;
+  }
+
+  setReadMessages((prev) => {
+    if (prev.includes(messageId)) {
+      return prev;
+    }
+
+    return [...prev, messageId];
+  });
+});
+
+  return () => {
+  socket.off("connect");
+  socket.off("disconnect");
+  socket.off("new_reply");
+  socket.off("user_typing");
+  socket.off("user_stop_typing");
+  socket.off("message_read");
+
+if (typingTimeoutRef.current) {
+  clearTimeout(typingTimeoutRef.current);
+}
+    socket.disconnect();
+  };
+}, [id, currentUserId]);
+
+// =====================================================
+// STEP 22 - READ RECEIPTS
+// =====================================================
+
+useEffect(() => {
+  if (!currentUserId || replies.length === 0) {
+    return;
+  }
+
+  replies.forEach((reply) => {
+    const replyUserId =
+      reply.userId?._id || reply.userId;
+
+    // Mark only messages sent by the other user as read
+    if (
+      reply._id &&
+      String(replyUserId) !== String(currentUserId)
+    ) {
+      socket.emit("message_read", {
+        ticketId: id,
+        messageId: reply._id,
+      });
+    }
+  });
+}, [currentUserId, replies, id]);
+
+// =====================================================
+// CUSTOMER FEEDBACK
+// =====================================================
+
+useEffect(() => {
+  const loadFeedback = async () => {
+    if (!id || !ticket || !currentUserId) return;
+
+    const ownerId =
+      typeof ticket.userId === "object"
+        ? ticket.userId?._id || ticket.userId?.id
+        : ticket.userId;
+
+    const isOwner =
+      ownerId &&
+      String(ownerId) === String(currentUserId);
+
+    const canFeedback =
+      ticket.status === "Resolved" ||
+      ticket.status === "Closed";
+
+    if (!isOwner || !canFeedback) {
+      setFeedback(null);
       return;
     }
 
-    loadData();
-  }, [id]);
+    try {
+      setFeedbackLoading(true);
+      const data = await apiGet(`/feedback/ticket/${id}`);
+      setFeedback(data.feedback || null);
 
-  const loadData = async () => {
-    setLoading(true);
-
-    await Promise.all([
-      fetchTicket(),
-      fetchReplies(),
-      fetchActivities(),
-    ]);
-
-    setLoading(false);
+      if (data.feedback) {
+        setFeedbackRating(data.feedback.rating || 0);
+        setFeedbackComment(data.feedback.comment || "");
+      }
+    } catch (error) {
+      console.error("Fetch Feedback Error:", error);
+      setFeedback(null);
+    } finally {
+      setFeedbackLoading(false);
+    }
   };
 
-  // =====================================================
-  // FETCH TICKET
-  // =====================================================
+  loadFeedback();
+}, [id, ticket, currentUserId]);
+
+const submitFeedback = async (e) => {
+  e.preventDefault();
+
+  if (!feedbackRating) {
+    alert("Please select a rating from 1 to 5 stars.");
+    return;
+  }
+
+  if (feedback) {
+    alert("Feedback has already been submitted.");
+    return;
+  }
+
+  try {
+    setFeedbackSubmitting(true);
+
+    const data = await apiPost("/feedback", {
+      ticketId: id,
+      rating: feedbackRating,
+      comment: feedbackComment.trim(),
+    });
+
+    setFeedback(
+      data.feedback || {
+        rating: feedbackRating,
+        comment: feedbackComment.trim(),
+      }
+    );
+
+    alert("Thank you! Your feedback has been submitted.");
+  } catch (error) {
+    console.error("Submit Feedback Error:", error);
+    alert(error.message || "Failed to submit feedback");
+  } finally {
+    setFeedbackSubmitting(false);
+  }
+};
+
+// =====================================================
+// FETCH TICKET
+// =====================================================
 
   const fetchTicket = async () => {
     try {
@@ -206,7 +404,9 @@ function TicketDetails() {
   // ATTACHMENT HELPERS
   // =====================================================
 
-  const API_BASE_URL = "https://supportflow-backend-whmb.onrender.com/api";
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://supportflow-backend-whmb.onrender.com/api";
 
   const getAttachmentUrl = (
     attachment,
@@ -471,6 +671,51 @@ function TicketDetails() {
   };
 
   // =====================================================
+// AI REPLY GENERATOR
+// =====================================================
+
+const generateAIReply = async () => {
+  if (!ticket) {
+    alert("Ticket information is not available.");
+    return;
+  }
+
+  try {
+    setAiReplyLoading(true);
+
+    const conversation = replies
+      .map((reply) => {
+        const sender =
+          reply.userId?.name ||
+          (reply.senderType === "Admin"
+            ? "Support Agent"
+            : "Customer");
+
+        return `${sender}: ${reply.message}`;
+      })
+      .join("\n");
+
+    const data = await apiPost("/ai/generate-reply", {
+      title: ticket.title,
+      description: ticket.description,
+      conversation,
+    });
+
+    if (!data?.reply) {
+      throw new Error("AI did not generate a reply.");
+    }
+
+    setAiReply(data.reply);
+    setMessage(data.reply);
+  } catch (error) {
+    console.error("AI Reply Error:", error);
+    alert(error.message || "Failed to generate AI reply.");
+  } finally {
+    setAiReplyLoading(false);
+  }
+};
+
+  // =====================================================
   // SEND REPLY
   // =====================================================
 
@@ -541,8 +786,9 @@ function TicketDetails() {
           String(currentUserId);
 
       const senderType =
-        isAdminByRole ||
-        !isTicketOwner
+        user?.role === "Support Agent"
+          ? "Support Agent"
+          : isAdminByRole || !isTicketOwner
           ? "Admin"
           : "Customer";
 
@@ -716,6 +962,9 @@ function TicketDetails() {
       case "In Progress":
         return "status-in-progress";
 
+      case "Waiting for Customer":
+        return "status-waiting";
+
       case "Resolved":
         return "status-resolved";
 
@@ -781,6 +1030,9 @@ function TicketDetails() {
       case "Admin Reply":
         return "🛠️";
 
+      case "Support Agent Reply":
+        return "🎧";
+
       case "Ticket Deleted":
         return "🗑️";
 
@@ -816,6 +1068,9 @@ function TicketDetails() {
         return "activity-customer";
 
       case "Admin Reply":
+        return "activity-admin";
+
+      case "Support Agent Reply":
         return "activity-admin";
 
       case "Ticket Deleted":
@@ -932,18 +1187,30 @@ function TicketDetails() {
     );
   }
 
-  // =====================================================
-  // CURRENT USER
-  // =====================================================
-
-  const user =
-    getCurrentUser();
-
-  const currentUserId =
-    user?._id || user?.id;
-
   const isAdmin =
     checkIfAdmin(user);
+    const ticketOwnerId = getTicketOwnerId();
+
+const isTicketOwner =
+  ticketOwnerId &&
+  String(ticketOwnerId) === String(currentUserId);
+
+const targetUserId = isTicketOwner
+  ? ticket?.assignedTo?._id || ticket?.assignedTo
+  : ticketOwnerId;
+
+const targetName = isTicketOwner
+  ? ticket?.assignedTo?.name || "Support Agent"
+  : ticket?.userId?.name || "Customeer";
+
+  console.log("VOICE CALL DEBUG:", {
+  currentUserId,
+  ticketOwnerId,
+  isTicketOwner,
+  assignedTo: ticket?.assignedTo,
+  targetUserId,
+  targetName,
+});
 
   // =====================================================
   // MAIN UI
@@ -1139,6 +1406,163 @@ function TicketDetails() {
         </div>
 
       </div>
+
+      {/* =================================================
+          CUSTOMER FEEDBACK
+      ================================================= */}
+
+      {(() => {
+        const ownerId =
+          typeof ticket.userId === "object"
+            ? ticket.userId?._id || ticket.userId?.id
+            : ticket.userId;
+
+        const isOwner =
+          ownerId &&
+          String(ownerId) === String(currentUserId);
+
+        const canFeedback =
+          ticket.status === "Resolved" ||
+          ticket.status === "Closed";
+
+        if (!isOwner || !canFeedback) return null;
+
+        return (
+          <div
+            className="professional-feedback-card"
+            style={{
+              marginTop: "20px",
+              padding: "24px",
+              borderRadius: "14px",
+              border: "1px solid #e5e7eb",
+              background: "#fff",
+            }}
+          >
+            <h2 style={{ margin: "0 0 6px" }}>
+              😊 Customer Satisfaction
+            </h2>
+
+            <p style={{ color: "#666", marginTop: 0 }}>
+              How was your support experience?
+            </p>
+
+            {feedbackLoading ? (
+              <p>Loading your feedback...</p>
+            ) : feedback ? (
+              <div
+                style={{
+                  marginTop: "18px",
+                  padding: "18px",
+                  borderRadius: "10px",
+                  background: "#f8fafc",
+                }}
+              >
+                <div style={{ fontSize: "30px", letterSpacing: "3px" }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span key={star}>
+                      {star <= Number(feedback.rating) ? "★" : "☆"}
+                    </span>
+                  ))}
+                </div>
+
+                <strong>Your Rating: {feedback.rating}/5</strong>
+
+                {feedback.comment && (
+                  <p style={{ whiteSpace: "pre-wrap" }}>
+                    {feedback.comment}
+                  </p>
+                )}
+
+                <span style={{ color: "#16a34a", fontWeight: "600" }}>
+                  ✓ Feedback submitted successfully
+                </span>
+              </div>
+            ) : (
+              <form onSubmit={submitFeedback}>
+                <label
+                  style={{
+                    display: "block",
+                    fontWeight: "600",
+                    margin: "18px 0 10px",
+                  }}
+                >
+                  Rate your support experience
+                </label>
+
+                <div style={{ display: "flex", gap: "6px", marginBottom: "18px" }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setFeedbackRating(star)}
+                      aria-label={`Rate ${star} out of 5`}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: "34px",
+                        padding: "2px",
+                        color: star <= feedbackRating ? "#f59e0b" : "#d1d5db",
+                      }}
+                    >
+                      {star <= feedbackRating ? "★" : "☆"}
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  value={feedbackComment}
+                  onChange={(e) => setFeedbackComment(e.target.value)}
+                  placeholder="Tell us about your experience (optional)..."
+                  rows={4}
+                  maxLength={1000}
+                  disabled={feedbackSubmitting}
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "10px",
+                    resize: "vertical",
+                    fontFamily: "inherit",
+                  }}
+                />
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginTop: "8px",
+                  }}
+                >
+                  <span style={{ fontSize: "12px", color: "#888" }}>
+                    {feedbackComment.length}/1000
+                  </span>
+
+                  <button
+                    type="submit"
+                    disabled={feedbackSubmitting || !feedbackRating}
+                    style={{
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "11px 18px",
+                      background:
+                        feedbackSubmitting || !feedbackRating ? "#cbd5e1" : "#2563eb",
+                      color: "#fff",
+                      cursor:
+                        feedbackSubmitting || !feedbackRating ? "not-allowed" : "pointer",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {feedbackSubmitting ? "Submitting..." : "Submit Feedback ⭐"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        );
+      })()}
 
 
       {/* =================================================
@@ -1508,7 +1932,20 @@ function TicketDetails() {
                           </div>
 
                         )}
+{isMine && (
+  <div
+    style={{
+      fontSize: "11px",
+      color: readMessages.includes(reply._id)
+        ? "#4da6ff"
+        : "#888",
+      marginTop: "3px",
+    }}
+  >
 
+    {readMessages.includes(reply._id) ? "✓✓ Read" : "✓ Sent"}
+  </div>
+)}
 
                         <div className="message-time">
 
@@ -1531,6 +1968,23 @@ function TicketDetails() {
 
         </div>
 
+        {isTyping && (
+          <div
+            style={{
+              fontSize: "13px",
+              color: "#666",
+              fontStyle: "italic",
+              marginBottom: "8px",
+              paddingLeft: "10px",
+            }}
+          >
+            {typingUser} is typing...
+          </div>
+        )}
+
+        {/* =================================================
+            REPLY FORM
+        ================================================= */}
 
         {/* =================================================
             REPLY FORM
@@ -1541,20 +1995,63 @@ function TicketDetails() {
 
           <form
             className="professional-reply-form"
-            onSubmit={
-              sendReply
-            }
-          >
+            onSubmit={sendReply}
+>
+  <div className="reply-input-wrapper">
 
-            <div className="reply-input-wrapper">
+  <button
+    type="button"
+    onClick={generateAIReply}
+    disabled={aiReplyLoading || sending}
+    style={{
+      marginBottom: "12px",
+      border: "none",
+      borderRadius: "8px",
+      padding: "10px 16px",
+      background: "#7c3aed",
+      color: "#fff",
+      cursor:
+        aiReplyLoading || sending ? "not-allowed" : "pointer",
+      fontWeight: "600",
+    }}
+  >
+    {aiReplyLoading
+      ? "🤖 Generating..."
+      : "✨ Generate AI Reply"}
+  </button>
 
-              <textarea
-                value={message}
-                onChange={(e) =>
-                  setMessage(
-                    e.target.value
-                  )
-                }
+    <textarea
+         value={message}
+           onChange={(e) => {
+          const value = e.target.value;
+
+  setMessage(value);
+
+  if (!id) {
+    return;
+  }
+
+  const currentUser = getCurrentUser();
+
+  socket.emit("typing", {
+    ticketId: id,
+    userName:
+      currentUser?.name ||
+      currentUser?.fullName ||
+      currentUser?.email ||
+      "Someone",
+  });
+
+  if (typingTimeoutRef.current) {
+    clearTimeout(typingTimeoutRef.current);
+  }
+
+  typingTimeoutRef.current = setTimeout(() => {
+    socket.emit("stop_typing", {
+      ticketId: id,
+    });
+  }, 1000);
+}}
                 placeholder="Type your message here..."
                 rows={4}
                 maxLength={1000}
@@ -1594,15 +2091,25 @@ function TicketDetails() {
           </div>
 
         )}
+ 
+       </div>
 
-      </div>
+      {/* =================================================
+          VOICE CALL
+      ================================================= */}
 
+      <CallModal
+        socket={socket}
+        currentUser={user}
+        ticketId={id}
+        targetUserId={targetUserId}
+        targetName={targetName}
+      />
 
       {/* =================================================
           ADMIN CONTROLS
       ================================================= */}
-
-      {isAdmin && (
+      {(isAdmin || user?.role === "Support Agent") && (
 
         <div className="professional-admin-control">
 
@@ -1618,36 +2125,33 @@ function TicketDetails() {
 
           </div>
 
-          <select
-            value={
-              ticket.status ||
-              "Open"
-            }
-            disabled={updating}
-            onChange={(e) =>
-              updateStatus(
-                e.target.value
-              )
-            }
-          >
+         <select
+  value={ticket.status || "Open"}
+  disabled={updating}
+  onChange={(e) =>
+    updateStatus(e.target.value)
+  }
+>
+  <option value="Open">
+    Open
+  </option>
 
-            <option value="Open">
-              Open
-            </option>
+  <option value="In Progress">
+    In Progress
+  </option>
 
-            <option value="In Progress">
-              In Progress
-            </option>
+  <option value="Waiting for Customer">
+    Waiting for Customer
+  </option>
 
-            <option value="Resolved">
-              Resolved
-            </option>
+  <option value="Resolved">
+    Resolved
+  </option>
 
-            <option value="Closed">
-              Closed
-            </option>
-
-          </select>
+  <option value="Closed">
+    Closed
+  </option>
+</select> 
 
           {updating && (
             <span className="admin-updating">

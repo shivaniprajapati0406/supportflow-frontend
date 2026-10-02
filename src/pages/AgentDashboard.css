@@ -1,0 +1,871 @@
+/* =========================================================
+   SUPPORTFLOW - AGENT DASHBOARD
+   Premium Dark UI
+========================================================= */
+
+.agent-page {
+  min-height: calc(100vh - 76px);
+  padding: 45px 24px 70px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(37, 99, 235, 0.12),
+      transparent 35%
+    ),
+    #0f1117;
+  color: #f8fafc;
+}
+
+.agent-page * {
+  box-sizing: border-box;
+}
+
+.agent-page > .agent-header,
+.agent-page > .agent-summary-grid,
+.agent-page > .agent-performance-info,
+.agent-page > .agent-tickets-section {
+  width: min(1400px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.agent-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 32px;
+}
+
+.dashboard-eyebrow {
+  margin-bottom: 10px;
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+}
+
+.agent-header h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -1.5px;
+}
+
+.agent-header p {
+  max-width: 650px;
+  margin: 12px 0 0;
+  color: #94a3b8;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.agent-refresh-button {
+  min-height: 46px;
+  padding: 0 20px;
+  border: 1px solid #334155;
+  border-radius: 11px;
+  background: #1b202b;
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.agent-refresh-button:hover {
+  border-color: #3b82f6;
+  background: #2563eb;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+}
+
+/* =========================================================
+   SUMMARY GRID
+========================================================= */
+
+.agent-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+/* =========================================================
+   SUMMARY CARDS
+========================================================= */
+
+.agent-card {
+  position: relative;
+  min-height: 145px;
+  padding: 23px;
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  overflow: hidden;
+
+  border: 1px solid #303746;
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #1d2330,
+      #171c26
+    );
+
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.18);
+
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.agent-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    #2563eb,
+    #60a5fa,
+    transparent
+  );
+  opacity: 0.8;
+}
+
+.agent-card:hover {
+  transform: translateY(-5px);
+  border-color: #3b82f6;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.28),
+    0 0 25px rgba(37, 99, 235, 0.08);
+}
+
+.agent-card-icon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #344054;
+  border-radius: 15px;
+
+  background: #252c3a;
+
+  font-size: 24px;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.agent-card p {
+  margin: 0 0 8px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.agent-card h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.agent-card small {
+  display: block;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+/* Metric values */
+
+.agent-metric-value {
+  font-size: 22px !important;
+  line-height: 1.2 !important;
+}
+
+/* =========================================================
+   PERFORMANCE INFO
+========================================================= */
+
+.agent-performance-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.agent-performance-info > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  padding: 17px 20px;
+
+  border: 1px solid #2d3544;
+  border-radius: 14px;
+
+  background: #171c25;
+
+  transition: 0.2s ease;
+}
+
+.agent-performance-info > div:hover {
+  border-color: #3b82f6;
+  background: #1a202b;
+}
+
+.agent-performance-info strong {
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.agent-performance-info span {
+  min-width: 38px;
+  height: 30px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 10px;
+
+  border-radius: 999px;
+
+  background: rgba(37, 99, 235, 0.14);
+  color: #60a5fa;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   TICKETS SECTION
+========================================================= */
+
+.agent-tickets-section {
+  overflow: hidden;
+
+  border: 1px solid #303746;
+  border-radius: 18px;
+
+  background: #191e28;
+
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.18);
+}
+
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
+.agent-section-header {
+  min-height: 88px;
+  padding: 22px 25px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  border-bottom: 1px solid #2b3342;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(37, 99, 235, 0.06),
+      transparent
+    );
+}
+
+.agent-section-header h2 {
+  margin: 0 0 5px;
+  color: #f8fafc;
+  font-size: 20px;
+}
+
+.agent-section-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.ticket-count {
+  padding: 7px 12px;
+
+  border: 1px solid #334155;
+  border-radius: 999px;
+
+  background: #202735;
+  color: #cbd5e1;
+
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   TABLE WRAPPER
+========================================================= */
+
+.agent-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.agent-table {
+  width: 100%;
+  min-width: 1050px;
+  border-collapse: collapse;
+}
+
+.agent-table thead {
+  background: #141821;
+}
+
+.agent-table th {
+  padding: 15px 16px;
+
+  border-bottom: 1px solid #2d3544;
+
+  color: #64748b;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 0.8px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.agent-table td {
+  padding: 17px 16px;
+
+  border-bottom: 1px solid #252c38;
+
+  color: #cbd5e1;
+
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.agent-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.agent-table tbody tr:hover {
+  background: rgba(37, 99, 235, 0.055);
+}
+
+.agent-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* =========================================================
+   SUBJECT
+========================================================= */
+
+.ticket-subject {
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ticket-subject strong {
+  overflow: hidden;
+
+  color: #f8fafc;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ticket-subject small {
+  overflow: hidden;
+
+  color: #475569;
+
+  font-size: 10px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   CUSTOMER
+========================================================= */
+
+.customer-info {
+  max-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.customer-info strong {
+  overflow: hidden;
+
+  color: #cbd5e1;
+
+  font-size: 13px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-info small {
+  overflow: hidden;
+
+  color: #64748b;
+
+  font-size: 11px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   CATEGORY
+========================================================= */
+
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 6px 10px;
+
+  border: 1px solid #334155;
+  border-radius: 8px;
+
+  background: #202735;
+  color: #cbd5e1;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+/* =========================================================
+   PRIORITY BADGES
+========================================================= */
+
+.priority-badge,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 78px;
+
+  padding: 6px 10px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.priority-urgent {
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+.priority-high {
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  background: rgba(249, 115, 22, 0.12);
+  color: #fb923c;
+}
+
+.priority-medium {
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  background: rgba(234, 179, 8, 0.12);
+  color: #facc15;
+}
+
+.priority-low {
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+
+/* =========================================================
+   STATUS BADGES
+========================================================= */
+
+.status-open {
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+
+.status-progress {
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  background: rgba(234, 179, 8, 0.12);
+  color: #facc15;
+}
+
+.status-waiting {
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  background: rgba(168, 85, 247, 0.12);
+  color: #c084fc;
+}
+
+.status-resolved {
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+}
+
+.status-closed {
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  background: rgba(100, 116, 139, 0.12);
+  color: #94a3b8;
+}
+
+/* =========================================================
+   DATES
+========================================================= */
+
+.updated-date {
+  color: #94a3b8;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   VIEW TICKET BUTTON
+========================================================= */
+
+.view-ticket-button {
+  min-height: 36px;
+
+  padding: 0 13px;
+
+  border: 1px solid #334155;
+  border-radius: 9px;
+
+  background: #202735;
+  color: #93c5fd;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  cursor: pointer;
+  white-space: nowrap;
+
+  transition: 0.2s ease;
+}
+
+.view-ticket-button:hover {
+  border-color: #3b82f6;
+  background: #2563eb;
+  color: #ffffff;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 7px 18px rgba(37, 99, 235, 0.22);
+}
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.agent-empty {
+  padding: 70px 25px;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 68px;
+  height: 68px;
+
+  margin: 0 auto 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #334155;
+  border-radius: 18px;
+
+  background: #202735;
+
+  font-size: 30px;
+}
+
+.agent-empty h3 {
+  margin: 0 0 8px;
+
+  color: #f8fafc;
+  font-size: 20px;
+}
+
+.agent-empty p {
+  max-width: 400px;
+
+  margin: 0 auto;
+
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.agent-loading {
+  min-height: 70vh;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.agent-spinner {
+  width: 48px;
+  height: 48px;
+
+  margin-bottom: 20px;
+
+  border: 4px solid #293140;
+  border-top-color: #3b82f6;
+
+  border-radius: 50%;
+
+  animation: agent-spin 0.9s linear infinite;
+}
+
+@keyframes agent-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.agent-loading h3 {
+  margin: 0 0 7px;
+
+  color: #f8fafc;
+  font-size: 19px;
+}
+
+.agent-loading p {
+  margin: 0;
+
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.agent-error {
+  min-height: 70vh;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px;
+
+  text-align: center;
+}
+
+.agent-error h2 {
+  margin: 0 0 10px;
+
+  color: #f8fafc;
+  font-size: 25px;
+}
+
+.agent-error p {
+  max-width: 520px;
+
+  margin: 0 0 22px;
+
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.agent-button {
+  min-height: 44px;
+
+  padding: 0 20px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #2563eb;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.agent-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+}
+
+/* =========================================================
+   RESPONSIVE - 1100px
+========================================================= */
+
+@media (max-width: 1100px) {
+  .agent-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* =========================================================
+   RESPONSIVE - 850px
+========================================================= */
+
+@media (max-width: 850px) {
+  .agent-page {
+    padding: 35px 18px 55px;
+  }
+
+  .agent-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .agent-refresh-button {
+    width: 100%;
+  }
+
+  .agent-performance-info {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE - 650px
+========================================================= */
+
+@media (max-width: 650px) {
+  .agent-page {
+    min-height: calc(100vh - 65px);
+    padding: 28px 14px 45px;
+  }
+
+  .agent-header {
+    margin-bottom: 25px;
+  }
+
+  .agent-header h1 {
+    font-size: 30px;
+  }
+
+  .agent-header p {
+    font-size: 13px;
+  }
+
+  .agent-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  .agent-card {
+    min-height: 120px;
+    padding: 19px;
+  }
+
+  .agent-card-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 21px;
+  }
+
+  .agent-card h2 {
+    font-size: 27px;
+  }
+
+  .agent-performance-info > div {
+    padding: 15px;
+  }
+
+  .agent-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .ticket-count {
+    align-self: flex-start;
+  }
+
+  .agent-tickets-section {
+    border-radius: 14px;
+  }
+
+  .agent-table {
+    min-width: 1000px;
+  }
+
+  .agent-empty {
+    padding: 55px 20px;
+  }
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.agent-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.agent-table-wrapper::-webkit-scrollbar-track {
+  background: #141821;
+}
+
+.agent-table-wrapper::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+
+.agent-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

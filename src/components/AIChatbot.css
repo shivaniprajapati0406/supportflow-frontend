@@ -1,0 +1,666 @@
+/* ==========================================================
+   SUPPORTFLOW AI CHATBOT
+   PREMIUM FLOATING CHAT UI
+========================================================== */
+
+
+/* ==========================================================
+   FLOATING AI BUTTON
+========================================================== */
+
+.ai-chatbot-button {
+  position: fixed;
+
+  right: 28px;
+  bottom: 24px;
+
+  width: 64px;
+  height: 64px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: linear-gradient(
+    135deg,
+    #4f46e5,
+    #7c3aed
+  );
+
+  color: white;
+
+  font-size: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  z-index: 9999;
+
+  box-shadow:
+    0 12px 30px rgba(79, 70, 229, 0.45);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.ai-chatbot-button:hover {
+  transform: translateY(-4px) scale(1.04);
+
+  box-shadow:
+    0 18px 40px rgba(79, 70, 229, 0.55);
+}
+
+.ai-chatbot-button:active {
+  transform: scale(0.96);
+}
+
+
+/* ==========================================================
+   CHAT WINDOW
+========================================================== */
+
+.ai-chatbot-window {
+  position: fixed;
+
+  right: 28px;
+  bottom: 100px;
+
+  width: 430px;
+  height: 650px;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #080f1d;
+
+  border: 1px solid rgba(148, 163, 184, 0.2);
+
+  border-radius: 24px;
+
+  overflow: hidden;
+
+  z-index: 9998;
+
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.55);
+
+  animation: aiChatbotOpen 0.25s ease;
+}
+
+
+/* ==========================================================
+   OPEN ANIMATION
+========================================================== */
+
+@keyframes aiChatbotOpen {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* ==========================================================
+   HEADER
+========================================================== */
+
+.ai-chatbot-header {
+  min-height: 92px;
+
+  padding: 18px 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: linear-gradient(
+    135deg,
+    #252c72,
+    #332b8d
+  );
+
+  border-bottom: 1px solid rgba(
+    255,
+    255,
+    255,
+    0.1
+  );
+}
+
+.ai-chatbot-header h3 {
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: 21px;
+
+  font-weight: 700;
+
+  letter-spacing: -0.3px;
+}
+
+.ai-chatbot-header span {
+  display: block;
+
+  margin-top: 7px;
+
+  color: #c7d2fe;
+
+  font-size: 14px;
+}
+
+
+/* ==========================================================
+   CLOSE BUTTON
+========================================================== */
+
+.ai-chatbot-close {
+  width: 44px;
+  height: 44px;
+
+  border: none;
+  border-radius: 11px;
+
+  background: rgba(
+    255,
+    255,
+    255,
+    0.09
+  );
+
+  color: #ffffff;
+
+  font-size: 28px;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.ai-chatbot-close:hover {
+  background: rgba(
+    255,
+    255,
+    255,
+    0.18
+  );
+
+  transform: rotate(3deg);
+}
+
+
+/* ==========================================================
+   MESSAGES AREA
+========================================================== */
+
+.ai-chatbot-messages {
+  flex: 1;
+
+  padding: 22px;
+
+  overflow-y: auto;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(79, 70, 229, 0.08),
+      transparent 35%
+    ),
+    #080f1d;
+
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+
+/* ==========================================================
+   SCROLLBAR
+========================================================== */
+
+.ai-chatbot-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ai-chatbot-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-chatbot-messages::-webkit-scrollbar-thumb {
+  background: #334155;
+
+  border-radius: 10px;
+}
+
+
+/* ==========================================================
+   MESSAGE
+========================================================== */
+
+.chat-message {
+  max-width: 82%;
+
+  padding: 13px 16px;
+
+  margin-bottom: 15px;
+
+  border-radius: 12px;
+
+  font-size: 15px;
+
+  line-height: 1.55;
+
+  word-wrap: break-word;
+
+  white-space: pre-wrap;
+}
+
+
+/* ==========================================================
+   AI MESSAGE
+========================================================== */
+
+.chat-message.ai {
+  margin-right: auto;
+
+  background: #1d293b;
+
+  color: #e5e7eb;
+
+  border: 1px solid rgba(
+    148,
+    163,
+    184,
+    0.12
+  );
+
+  border-top-left-radius: 5px;
+
+  box-shadow:
+    0 5px 18px rgba(0, 0, 0, 0.12);
+}
+
+
+/* ==========================================================
+   USER MESSAGE
+========================================================== */
+
+.chat-message.user {
+  margin-left: auto;
+
+  background: linear-gradient(
+    135deg,
+    #2563eb,
+    #4f46e5
+  );
+
+  color: #ffffff;
+
+  border-top-right-radius: 5px;
+
+  box-shadow:
+    0 8px 22px rgba(
+      37,
+      99,
+      235,
+      0.25
+    );
+}
+
+
+/* ==========================================================
+   CREATE TICKET ACTION AREA
+========================================================== */
+
+.ai-chatbot-ticket-action {
+  padding: 10px 16px;
+
+  background: #101827;
+
+  border-top: 1px solid rgba(
+    255,
+    255,
+    255,
+    0.08
+  );
+}
+
+
+/* ==========================================================
+   CREATE TICKET BUTTON
+========================================================== */
+
+.ai-chatbot-ticket-action button {
+  width: 100%;
+
+  min-height: 42px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  padding: 10px 14px;
+
+  background: linear-gradient(
+    135deg,
+    #6366f1,
+    #4f46e5
+  );
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 7px 18px rgba(
+      79,
+      70,
+      229,
+      0.22
+    );
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.ai-chatbot-ticket-action button:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 10px 24px rgba(
+      79,
+      70,
+      229,
+      0.35
+    );
+}
+
+.ai-chatbot-ticket-action button:active {
+  transform: scale(0.98);
+}
+
+
+/* ==========================================================
+   INPUT AREA
+========================================================== */
+
+.ai-chatbot-input-area {
+  min-height: 76px;
+
+  padding: 14px 16px;
+
+  display: flex;
+
+  gap: 10px;
+
+  background: #101827;
+
+  border-top: 1px solid rgba(
+    255,
+    255,
+    255,
+    0.08
+  );
+}
+
+
+/* ==========================================================
+   INPUT
+========================================================== */
+
+.ai-chatbot-input-area input {
+  flex: 1;
+
+  min-width: 0;
+
+  height: 52px;
+
+  padding: 0 16px;
+
+  border-radius: 12px;
+
+  border: 1px solid #26364d;
+
+  outline: none;
+
+  background: #080f1d;
+
+  color: #f8fafc;
+
+  font-size: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.ai-chatbot-input-area input::placeholder {
+  color: #64748b;
+}
+
+.ai-chatbot-input-area input:focus {
+  border-color: #6366f1;
+
+  box-shadow:
+    0 0 0 3px rgba(
+      99,
+      102,
+      241,
+      0.12
+    );
+}
+
+.ai-chatbot-input-area input:disabled {
+  opacity: 0.65;
+
+  cursor: not-allowed;
+}
+
+
+/* ==========================================================
+   SEND BUTTON
+========================================================== */
+
+.ai-chatbot-input-area > button {
+  width: 52px;
+  height: 52px;
+
+  flex-shrink: 0;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: linear-gradient(
+    135deg,
+    #4f46e5,
+    #3730a3
+  );
+
+  color: #ffffff;
+
+  font-size: 23px;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.ai-chatbot-input-area > button:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 18px rgba(
+      79,
+      70,
+      229,
+      0.3
+    );
+}
+
+.ai-chatbot-input-area > button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.ai-chatbot-input-area > button:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
+
+
+/* ==========================================================
+   MOBILE RESPONSIVE
+========================================================== */
+
+@media (max-width: 600px) {
+
+  .ai-chatbot-button {
+    right: 18px;
+    bottom: 18px;
+
+    width: 58px;
+    height: 58px;
+
+    font-size: 27px;
+  }
+
+
+  .ai-chatbot-window {
+    right: 10px;
+    left: 10px;
+
+    bottom: 88px;
+
+    width: auto;
+
+    height: calc(
+      100vh - 110px
+    );
+
+    max-height: 680px;
+
+    border-radius: 20px;
+  }
+
+
+  .ai-chatbot-header {
+    min-height: 82px;
+
+    padding: 16px;
+  }
+
+
+  .ai-chatbot-header h3 {
+    font-size: 18px;
+  }
+
+
+  .ai-chatbot-header span {
+    font-size: 13px;
+  }
+
+
+  .ai-chatbot-messages {
+    padding: 16px;
+  }
+
+
+  .chat-message {
+    max-width: 88%;
+
+    font-size: 14px;
+  }
+
+
+  .ai-chatbot-ticket-action {
+    padding: 9px 12px;
+  }
+
+
+  .ai-chatbot-input-area {
+    padding: 11px 12px;
+  }
+
+
+  .ai-chatbot-input-area input {
+    height: 48px;
+  }
+
+
+  .ai-chatbot-input-area > button {
+    width: 48px;
+    height: 48px;
+  }
+
+}
+
+
+/* ==========================================================
+   VERY SMALL SCREENS
+========================================================== */
+
+@media (max-width: 380px) {
+
+  .ai-chatbot-window {
+    right: 6px;
+    left: 6px;
+
+    bottom: 82px;
+
+    border-radius: 17px;
+  }
+
+
+  .ai-chatbot-header {
+    padding: 13px;
+  }
+
+
+  .ai-chatbot-messages {
+    padding: 13px;
+  }
+
+
+  .chat-message {
+    max-width: 92%;
+
+    padding: 11px 13px;
+
+    font-size: 13px;
+  }
+
+
+  .ai-chatbot-ticket-action button {
+    font-size: 13px;
+  }
+
+}
